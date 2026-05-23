@@ -268,11 +268,11 @@ export async function fetchWeeklyProgressDirectly(): Promise<WeeklyProgressRespo
     const col1 = row[1] ? row[1].trim() : '';
     const col2 = row[2] ? row[2].trim() : '';
 
-    if (col1 === 'Progres Total Rencana') {
+    if (col1 === 'Progres Total Rencana' && rencanaRow.length === 0) {
       rencanaRow = row;
-    } else if (col1 === 'Progres Total Riil') {
+    } else if (col1 === 'Progres Total Riil' && riilRow.length === 0) {
       riilRow = row;
-    } else if (col1 === 'Deviasi') {
+    } else if (col1 === 'Deviasi' && deviasiRow.length === 0) {
       deviasiRow = row;
     } else if (/^[A-K]$/.test(col0) && col1 !== '' && col1 !== 'REKAPITULASI BOBOT PEKERJAAN' && col2 !== '') {
       const weight = parsePercentage(col2);

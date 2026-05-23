@@ -300,6 +300,8 @@ export function ReportTimeline({ data }: ReportTimelineProps) {
       doc.text(weatherSummary, 43, yPosition + 9.5);
       
       yPosition += 22; // increment spacer to next day report
+
+      yPosition += 8; // gentle padding before the next report card starts
     });
     
     doc.save(`Laporan_Harian_Filtered_${new Date().toISOString().slice(0, 10)}.pdf`);

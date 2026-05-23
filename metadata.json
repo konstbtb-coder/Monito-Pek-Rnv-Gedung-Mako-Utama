@@ -1,7 +1,10 @@
 {
   "name": "Remix: Lap Progres Rnv Gedung Mako Utama",
   "description": "Real-time dashboard dan analisis laporan harian Pekerjaan Gedung Mako Utama selama 7 hari terakhir.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]

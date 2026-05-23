@@ -561,39 +561,10 @@ export default function App() {
 
     y += 32;
 
-    // METRICS CARDS GRID (2x2)
-    const drawPDFMetric = (xPos: number, yPos: number, title: string, value: string, subText: string, borderCol: number[]) => {
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(226, 232, 240); // slate-200
-      doc.setLineWidth(0.3);
-      doc.roundedRect(xPos, yPos, 87, 22, 3, 3, 'FD');
-
-      doc.setFillColor(borderCol[0], borderCol[1], borderCol[2]);
-      doc.roundedRect(xPos, yPos, 2, 22, 3, 3, 'F');
-      doc.rect(xPos + 1.2, yPos, 1, 22, 'F'); // make sure inner rounding is neat
-
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(6.5);
-      doc.setTextColor(148, 163, 184); // slate-400
-      doc.text(title.toUpperCase(), xPos + 7, yPos + 5.5);
-
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(13.5);
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.text(value, xPos + 7, yPos + 12.5);
-
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(6.5);
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.text(subText, xPos + 7, yPos + 18);
-    };
-
     // Calculate dynamic values for progress update
     let latestActual = 0;
     let latestPlan = 0;
     let latestDeviation = 0;
-    let healthStatus = "Belum Dimulai";
-    let healthColor = amber; // [217, 119, 6]
     let weekLabel = "Minggu 0";
 
     if (weeklyData && weeklyData.riil && weeklyData.riil.length > 0) {
@@ -601,31 +572,186 @@ export default function App() {
       latestActual = typeof weeklyData.riil[latestIdx] === 'number' ? weeklyData.riil[latestIdx] : 0;
       latestPlan = typeof weeklyData.rencana[latestIdx] === 'number' ? weeklyData.rencana[latestIdx] : 0;
       latestDeviation = typeof weeklyData.deviasi[latestIdx] === 'number' ? weeklyData.deviasi[latestIdx] : 0;
-      weekLabel = `Minggu ke-${latestIdx + 1}`;
-      
-      if (latestActual > 0) {
-        if (latestDeviation < 0) {
-          healthStatus = "TERLAMBAT (Kritis) ⚠️";
-          healthColor = [220, 38, 38]; // Red
-        } else {
-          healthStatus = "SEHAT & LANCAR ✔️";
-          healthColor = [5, 150, 105]; // Emerald
-        }
-      }
+      const latestDateStr = weeklyData.headers[latestIdx] || '';
+      weekLabel = `Minggu ${latestIdx + 1} (${latestDateStr})`;
     }
 
-    // Active progress updates (progres riil, rencana, deviasi, kesimpulan kesehatan)
-    drawPDFMetric(15, y, 'Progres Pekerjaan (Riil)', `${latestActual.toFixed(2)}%`, `Realisasi Fisik Kumulatif s/d ${weekLabel}`, emerald);
-    drawPDFMetric(108, y, 'Progres Rencana (Target)', `${latestPlan.toFixed(2)}%`, `Target Rencana Kumulatif s/d ${weekLabel}`, sky);
+    // Prepare Health parameters
+    let healthStatusStr = "Sehat";
+    let healthDesc = "Kemajuan proyek melebihi atau sesuai dengan target rencana mingguan (deviasi positif atau netral).";
+    let healthColorRGB = [16, 185, 129]; // Emerald
 
-    y += 26;
+    if (latestDeviation < -2.0) {
+      healthStatusStr = "Kritis";
+      healthDesc = "Proyek mengalami kendala keterlambatan serius di bawah batas toleransi deviasi (-2%). Diperlukan akselerasi segera!";
+      healthColorRGB = [239, 68, 68]; // Red
+    } else if (latestDeviation < 0.0) {
+      healthStatusStr = "Terlambat";
+      healthDesc = "Terjadi keterlambatan minor yang perlu diwaspadai agar tidak menghambat sisa jadwal rencana konstruksi.";
+      healthColorRGB = [245, 158, 11]; // Amber
+    }
+
+    const cardHeight = 36;
+    
+    // --- CARD 1: KESEHATAN PROYEK ---
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.setLineWidth(0.35);
+    doc.roundedRect(15, y, 58, cardHeight, 3.5, 3.5, 'FD');
+    
+    // Left decorative bar
+    doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
+    doc.roundedRect(15, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+    doc.rect(16, y, 0.5, cardHeight, 'F');
+
+    // Title Tag
+    doc.setFillColor(248, 250, 252); // slate-50
+    doc.roundedRect(19, y + 3.5, 26, 4, 1, 1, 'F');
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(71, 85, 105); // slate-600
+    doc.text('KESEHATAN PROYEK', 20.5, y + 6.3);
+
+    // Indicator Dot green/red
+    doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
+    doc.ellipse(15 + 58 - 5, y + 5.5, 1.0, 1.0, 'F');
+
+    // Kondisi Kumulatif
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text('KONDISI KUMULATIF', 19, y + 12);
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text(healthStatusStr, 19, y + 18.5);
+
+    // Description text wrapped nicely
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(5.5);
+    doc.setTextColor(71, 85, 105); // slate-600
+    const healthLines = doc.splitTextToSize(healthDesc, 51);
+    healthLines.forEach((line: string, idx: number) => {
+      doc.text(line, 19, y + 23.5 + (idx * 2.5));
+    });
+
+    // Measurement week footer
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.2);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text(`Minggu Pengukuran: ${weekLabel}`, 19, y + 32.5);
+
+
+    // --- CARD 2: PENYIMPANGAN S-CURVE ---
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.setLineWidth(0.35);
+    doc.roundedRect(76, y, 58, cardHeight, 3.5, 3.5, 'FD');
+
+    // Left decorative bar (emerald or red depending on deviation)
+    const deviationColorRGB = latestDeviation >= 0 ? [16, 185, 129] : [239, 68, 68];
+    doc.setFillColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
+    doc.roundedRect(76, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+    doc.rect(77, y, 0.5, cardHeight, 'F');
+
+    // Title Tag
+    doc.setFillColor(248, 250, 252); // slate-50
+    doc.roundedRect(80, y + 3.5, 31, 4, 1, 1, 'F');
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(71, 85, 105); // slate-600
+    doc.text('PENYIMPANGAN S-CURVE', 81.5, y + 6.3);
+
+    // Deviation Title & value
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text('DEVIASI TERBARU TERHITUNG', 80, y + 12);
 
     const devSign = latestDeviation >= 0 ? '+' : '';
-    const devColor = latestDeviation >= 0 ? emerald : [220, 38, 38];
-    drawPDFMetric(15, y, 'Deviasi Progres Pekerjaan', `${devSign}${latestDeviation.toFixed(2)}%`, `Selisih Realisasi vs Target Rencana`, devColor);
-    drawPDFMetric(108, y, 'Kesehatan Progres Pekerjaan', healthStatus, `Evaluasi Kelancaran Operasional Lapangan`, healthColor);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
+    doc.text(`${devSign}${latestDeviation.toFixed(3)}%`, 80, y + 18.5);
 
-    y += 32;
+    // Description text wrapped nicely
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(5.5);
+    doc.setTextColor(71, 85, 105); // slate-600
+    const devDesc = `Deviasi dihitung dari selisih antara realisasi aktual ${latestActual.toFixed(2)}% terhadap rancangan rencana ${latestPlan.toFixed(2)}%.`;
+    const devLines = doc.splitTextToSize(devDesc, 51);
+    devLines.forEach((line: string, idx: number) => {
+      doc.text(line, 80, y + 23.5 + (idx * 2.5));
+    });
+
+    // Deviation Status footer
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.2);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text('Status Deviasi: ', 80, y + 32.5);
+    doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
+    doc.text(latestDeviation >= 0 ? 'SURPLUS VOL' : 'KETERLAMBATAN', 93, y + 32.5);
+
+
+    // --- CARD 3: SISA RENCANA PROYEK ---
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.setLineWidth(0.35);
+    doc.roundedRect(137, y, 58, cardHeight, 3.5, 3.5, 'FD');
+
+    // Left decorative bar (Amber)
+    doc.setFillColor(245, 158, 11);
+    doc.roundedRect(137, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+    doc.rect(138, y, 0.5, cardHeight, 'F');
+
+    // Title Tag
+    doc.setFillColor(248, 250, 252); // slate-50
+    doc.roundedRect(141, y + 3.5, 31, 4, 1, 1, 'F');
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(71, 85, 105); // slate-600
+    doc.text('SISA RENCANA PROYEK', 142.5, y + 6.3);
+
+    // Remaining Title & value
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text('PEKERJAAN TERSISA', 141, y + 12);
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text(`${(100 - latestActual).toFixed(2)}%`, 141, y + 18.5);
+
+    // progress bar bar label
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.2);
+    doc.setTextColor(148, 163, 184); // slate-400
+    doc.text('Rasio Realisasi Selesai', 141, y + 23);
+    
+    doc.setFont('Helvetica', 'bold');
+    doc.setTextColor(16, 185, 129); // emerald
+    doc.text(`${latestActual.toFixed(2)}% / 100%`, 190, y + 23, { align: 'right' });
+
+    // progress bar track (grey)
+    doc.setFillColor(241, 245, 249); // slate-100
+    doc.roundedRect(141, y + 24.8, 49, 1.8, 0.9, 0.9, 'F');
+
+    // progress bar fill (green)
+    const fillWidth = Math.max(1, Math.min(49, (latestActual / 100) * 49));
+    doc.setFillColor(16, 185, 129); // emerald-500
+    doc.roundedRect(141, y + 24.8, fillWidth, 1.8, 0.9, 0.9, 'F');
+
+    // Contract completion footer
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(5.2);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text('Total Target Kontrak: ', 141, y + 32.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text('100.00% Selesai', 160, y + 32.5);
+
+    y += cardHeight + 6;
 
     if (includeWeeklySCurve) {
       // SECTION I: VISUALISASI GRAFIK PENYELARASAN PROGRES (S-CURVE CHART)
@@ -652,18 +778,22 @@ export default function App() {
       doc.setTextColor(51, 65, 85); // slate-700
       doc.text('GRAFIK S-CURVE JALUR AKUMULASI PROGRES PEKERJAAN', 20, y + 4.5);
 
-      // Legend - Rencana
+      // Legend - Rencana (Bullet Dot format to match reference image)
+      const legendY = y + 4.2;
       doc.setFillColor(79, 70, 229); // Indigo
-      doc.roundedRect(122, y + 3, 2.5, 1.2, 0.4, 0.4, 'F');
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(6);
-      doc.setTextColor(100, 116, 139);
-      doc.text('Rencana (%)', 126, y + 4.2);
+      doc.ellipse(118, legendY - 0.7, 0.6, 0.6, 'F');
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(6.8);
+      doc.setTextColor(51, 65, 85); // slate-700
+      doc.text('Rencana (%)', 121.5, legendY);
 
-      // Legend - Riil
+      // Legend - Riil (Bullet Dot format to match reference image)
       doc.setFillColor(5, 150, 105); // Emerald
-      doc.roundedRect(152, y + 3, 2.5, 1.2, 0.4, 0.4, 'F');
-      doc.text('Riil Kumulatif (%)', 156, y + 4.2);
+      doc.ellipse(148, legendY - 0.7, 0.6, 0.6, 'F');
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(6.8);
+      doc.setTextColor(51, 65, 85); // slate-700
+      doc.text('Riil (%)', 151.5, legendY);
 
       // Plot area dimensions
       const xPlotStart = 31;
@@ -673,27 +803,34 @@ export default function App() {
       const yPlotEnd = y + 40;
       const plotHeight = 32;
 
-      // Draw Y-axis grid lines and labels
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(5.5);
-      doc.setTextColor(148, 163, 184); // slate-400
+      // Draw Y-axis grid lines and labels nicely with higher contrast
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(100, 116, 139); // slate-500
 
       const levels = [0, 25, 50, 75, 100];
       levels.forEach((lvl) => {
         const yVal = yPlotEnd - (lvl / 100) * plotHeight;
-        // Grid line
-        doc.setDrawColor(241, 245, 249); // slate-100
-        doc.setLineWidth(0.15);
-        doc.line(xPlotStart, yVal, xPlotEnd, yVal);
         
-        // Y-axis label
+        // Clean Grid Line with dashed pattern using loop (extremely safe and portable)
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.18);
+        for (let xCoord = xPlotStart; xCoord < xPlotEnd; xCoord += 1.8) {
+          doc.line(xCoord, yVal, Math.min(xPlotEnd, xCoord + 0.9), yVal);
+        }
+        
+        // Higher contrast Y-axis text
         doc.text(`${lvl}%`, xPlotStart - 3.5, yVal + 1.2, { align: 'right' });
       });
 
-      // Draw the curves
+      // Draw the S-curves
       if (weeklyData && weeklyData.rencana && weeklyData.rencana.length > 1) {
-        const numWeeks = weeklyData.rencana.length;
-        const denom = numWeeks > 1 ? (numWeeks - 1) : 1;
+        const totalWeeks = weeklyData.rencana.length;
+        const latestRiilIdx = weeklyData.riil.reduce((acc, val, idx) => (typeof val === 'number' && !isNaN(val) && val > 0 ? idx : acc), -1);
+        
+        // Always draw the entire project duration (all weeks) in the PDF to match the full S-curve reference image
+        const limitWeeks = totalWeeks;
+        const denom = limitWeeks > 1 ? (limitWeeks - 1) : 1;
         
         const getSafeVal = (arr: number[] | undefined, index: number): number => {
           if (!arr) return 0;
@@ -701,10 +838,42 @@ export default function App() {
           return typeof v === 'number' && !isNaN(v) ? Math.max(0, Math.min(100, v)) : 0;
         };
 
-        // Draw Rencana Curve
+        // Helper: Draw filled area underneath curve using trapezoids
+        const drawTrapezoidUnderSegment = (x1: number, y1: number, x2: number, y2: number, yBaseline: number, fillCol: number[]) => {
+          doc.setFillColor(fillCol[0], fillCol[1], fillCol[2]);
+          const topY = Math.max(y1, y2);
+          const rectHeight = yBaseline - topY;
+          if (rectHeight > 0) {
+            doc.rect(x1, topY, x2 - x1, rectHeight, 'F');
+          }
+          doc.triangle(x1, y1, x2, y2, (y1 > y2 ? x1 : x2), topY, 'F');
+        };
+
+        // 1. Draw Rencana Area Fill (Light Indigo/Blue)
+        for (let i = 0; i < limitWeeks - 1; i++) {
+          const x1 = xPlotStart + (i / denom) * plotWidth;
+          const y1 = yPlotEnd - (getSafeVal(weeklyData.rencana, i) / 100) * plotHeight;
+          const x2 = xPlotStart + ((i + 1) / denom) * plotWidth;
+          const y2 = yPlotEnd - (getSafeVal(weeklyData.rencana, i + 1) / 100) * plotHeight;
+          drawTrapezoidUnderSegment(x1, y1, x2, y2, yPlotEnd, [238, 242, 255]); // Very light indigo-50
+        }
+
+        // 2. Draw Riil Area Fill (Light Emerald/Mint)
+        if (latestRiilIdx >= 0) {
+          const activeLimit = Math.min(limitWeeks - 1, latestRiilIdx);
+          for (let i = 0; i < activeLimit; i++) {
+            const x1 = xPlotStart + (i / denom) * plotWidth;
+            const y1 = yPlotEnd - (getSafeVal(weeklyData.riil, i) / 100) * plotHeight;
+            const x2 = xPlotStart + ((i + 1) / denom) * plotWidth;
+            const y2 = yPlotEnd - (getSafeVal(weeklyData.riil, i + 1) / 100) * plotHeight;
+            drawTrapezoidUnderSegment(x1, y1, x2, y2, yPlotEnd, [227, 252, 239]); // Premium mint-50
+          }
+        }
+
+        // 3. Draw Rencana Line Curve (Thick Indigo Stroke for high visibility)
         doc.setDrawColor(79, 70, 229); // Indigo
-        doc.setLineWidth(0.55);
-        for (let i = 0; i < numWeeks - 1; i++) {
+        doc.setLineWidth(1.0);
+        for (let i = 0; i < limitWeeks - 1; i++) {
           const x1 = xPlotStart + (i / denom) * plotWidth;
           const y1 = yPlotEnd - (getSafeVal(weeklyData.rencana, i) / 100) * plotHeight;
           const x2 = xPlotStart + ((i + 1) / denom) * plotWidth;
@@ -712,12 +881,12 @@ export default function App() {
           doc.line(x1, y1, x2, y2);
         }
 
-        // Draw Riil Curve
-        const latestRiilIdx = weeklyData.riil.reduce((acc, val, idx) => (typeof val === 'number' && !isNaN(val) && val > 0 ? idx : acc), -1);
+        // 4. Draw Riil Line Curve (Thick Emerald Stroke for strong print contrast)
         if (latestRiilIdx >= 0) {
           doc.setDrawColor(5, 150, 105); // Emerald
-          doc.setLineWidth(0.9);
-          for (let i = 0; i < latestRiilIdx; i++) {
+          doc.setLineWidth(1.5);
+          const activeLimit = Math.min(limitWeeks - 1, latestRiilIdx);
+          for (let i = 0; i < activeLimit; i++) {
             const x1 = xPlotStart + (i / denom) * plotWidth;
             const y1 = yPlotEnd - (getSafeVal(weeklyData.riil, i) / 100) * plotHeight;
             const x2 = xPlotStart + ((i + 1) / denom) * plotWidth;
@@ -725,59 +894,67 @@ export default function App() {
             doc.line(x1, y1, x2, y2);
           }
 
-          // Draw a soft marker circle + text value tag on the latest active point
+          // Plot-active nodes for active reference focus week
           const activeX = xPlotStart + (latestRiilIdx / denom) * plotWidth;
           const actualValRaw = typeof weeklyData.riil[latestRiilIdx] === 'number' ? weeklyData.riil[latestRiilIdx] : 0;
           const activeY = yPlotEnd - (getSafeVal(weeklyData.riil, latestRiilIdx) / 100) * plotHeight;
+          const planValRaw = typeof weeklyData.rencana[latestRiilIdx] === 'number' ? weeklyData.rencana[latestRiilIdx] : 0;
+          const activePlanY = yPlotEnd - (getSafeVal(weeklyData.rencana, latestRiilIdx) / 100) * plotHeight;
+
+          // Double highlight dot rings
+          doc.setFillColor(5, 150, 105); // emerald
+          doc.ellipse(activeX, activeY, 1.3, 1.3, 'F');
+          doc.setFillColor(79, 70, 229); // indigo
+          doc.ellipse(activeX, activePlanY, 1.3, 1.3, 'F');
+
+          // Dynamic offset calculation to prevent overlap of plan & real tooltip labels or hitting left Y-axis boundary
+          const isActualHigher = actualValRaw > planValRaw;
+          const labelPivotX = (latestRiilIdx < 3) ? (activeX + 16) : ((latestRiilIdx > totalWeeks - 4) ? (activeX - 16) : activeX);
           
-          doc.setFillColor(5, 150, 105);
-          doc.ellipse(activeX, activeY, 1.2, 1.2, 'F');
-          
-          // Value tag text above the point
+          // Tooltip Pill for actual progress (PROGRES RIIL)
+          const riilTooltipY = isActualHigher ? (activeY - 8.2) : (activeY + 3);
+          doc.setFillColor(15, 23, 42); // dark slate background
+          doc.roundedRect(labelPivotX - 14, riilTooltipY, 28, 5.2, 1, 1, 'F');
           doc.setFont('Helvetica', 'bold');
-          doc.setFontSize(5.5);
-          doc.setTextColor(5, 150, 105);
-          doc.text(`${actualValRaw.toFixed(2)}%`, activeX, activeY - 2, { align: 'center' });
+          doc.setFontSize(5.6);
+          doc.setTextColor(52, 211, 153); // bright emerald text
+          doc.text(`Riil: ${actualValRaw.toFixed(3)}%`, labelPivotX, riilTooltipY + 3.8, { align: 'center' });
+
+          // Tooltip Pill for plan progress (TARGET RENCANA)
+          const rencanaTooltipY = isActualHigher ? (activePlanY + 3) : (activePlanY - 8.2);
+          doc.setFillColor(79, 70, 229); // indigo background
+          doc.roundedRect(labelPivotX - 17, rencanaTooltipY, 34, 5.2, 1, 1, 'F');
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(5.6);
+          doc.setTextColor(255, 255, 255); // white text
+          doc.text(`Rencana: ${planValRaw.toFixed(3)}%`, labelPivotX, rencanaTooltipY + 3.8, { align: 'center' });
         }
 
-        // Draw X-axis week labels
-        doc.setFont('Helvetica', 'normal');
-        doc.setFontSize(5);
-        doc.setTextColor(148, 163, 184); // slate-400
-        
-        const labelStep = Math.max(1, Math.ceil(numWeeks / 8));
-        const drawnIndices: number[] = [];
-        for (let i = 0; i < numWeeks; i++) {
-          let shouldDraw = false;
-          if (i === 0) {
-            shouldDraw = true;
-          } else if (i === numWeeks - 1) {
-            // Only draw last index if the previous drawn index isn't too close to avoid text overlaps
-            if (drawnIndices.length > 0 && (numWeeks - 1) - drawnIndices[drawnIndices.length - 1] >= labelStep / 1.5) {
-              shouldDraw = true;
-            } else if (drawnIndices.length > 1) {
-              // Replace second-last drawn index with the last one if they are too close
-              drawnIndices.pop();
-              shouldDraw = true;
-            } else {
-              shouldDraw = true;
-            }
-          } else if (i % labelStep === 0) {
-            if ((numWeeks - 1) - i >= labelStep / 1.5) {
-              shouldDraw = true;
-            }
+        // 5. Draw Target focus vertical dotted reference line if active week is valid
+        if (latestRiilIdx >= 0 && latestRiilIdx < limitWeeks) {
+          const refereeX = xPlotStart + (latestRiilIdx / denom) * plotWidth;
+          doc.setDrawColor(245, 158, 11); // Orange reference line
+          doc.setLineWidth(0.25);
+          for (let dotY = yPlotStart; dotY < yPlotEnd; dotY += 1.5) {
+            doc.line(refereeX, dotY, refereeX, Math.min(yPlotEnd, dotY + 0.8));
           }
+        }
 
-          if (shouldDraw) {
-            drawnIndices.push(i);
-            const xCoord = xPlotStart + (i / denom) * plotWidth;
-            doc.setFont('Helvetica', 'bold');
+        // Draw X-axis week labels up to limitWeeks
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.setTextColor(51, 65, 85); // slate-700 for clearer printing
+        for (let i = 0; i < limitWeeks; i++) {
+          const xCoord = xPlotStart + (i / denom) * plotWidth;
+          
+          // Tiny tick mark on axis
+          doc.setDrawColor(148, 163, 184); // slate-400
+          doc.setLineWidth(0.25);
+          doc.line(xCoord, yPlotEnd, xCoord, yPlotEnd + 1.2);
+
+          // Only draw text labels for EVEN weeks (W-2, W-4, W-6, ... W-32) to match reference image exactly
+          if ((i + 1) % 2 === 0) {
             doc.text(`W-${i + 1}`, xCoord, yPlotEnd + 4, { align: 'center' });
-            
-            // Tiny tick mark on axis
-            doc.setDrawColor(226, 232, 240);
-            doc.setLineWidth(0.2);
-            doc.line(xCoord, yPlotEnd, xCoord, yPlotEnd + 1);
           }
         }
       }
@@ -920,7 +1097,9 @@ export default function App() {
         const latestActiveWeekIdx = weeklyData.riil.reduce((acc, val, idx) => (val > 0 ? idx : acc), 0);
 
         uniqueCats.forEach((cat, idx) => {
-          checkPageBreak(6.2);
+          const catNameLines = doc.splitTextToSize(cat.name, 68);
+          const rowHeight = Math.max(5.8, (catNameLines.length * 3.4) + 2.4);
+          checkPageBreak(rowHeight);
 
           // Alternating background
           if (idx % 2 === 0) {
@@ -928,31 +1107,33 @@ export default function App() {
           } else {
             doc.setFillColor(248, 250, 252);
           }
-          doc.rect(15, y, 180, 5.8, 'F');
+          doc.rect(15, y, 180, rowHeight, 'F');
 
           doc.setFont('Helvetica', 'bold');
           doc.setTextColor(15, 23, 42);
-          doc.text(cat.code, 18, y + 4.2);
+          doc.text(cat.code, 18, y + (rowHeight / 2) + 1.1);
 
           doc.setFont('Helvetica', 'normal');
-          doc.text(cat.name, 32, y + 4.2);
+          catNameLines.forEach((line: string, lineIdx: number) => {
+            doc.text(line, 32, y + 4.0 + (lineIdx * 3.4));
+          });
 
           const weight = cat.weight || 0;
           const progressVal = cat.progress[latestActiveWeekIdx] || 0;
           const contrib = (progressVal * weight) / 100;
 
-          doc.text(`${weight.toFixed(2)}%`, 110, y + 4.2, { align: 'center' });
-          doc.text(`${progressVal > 0 ? progressVal.toFixed(2) + '%' : '-'}`, 145, y + 4.2, { align: 'center' });
+          doc.text(`${weight.toFixed(2)}%`, 110, y + (rowHeight / 2) + 1.1, { align: 'center' });
+          doc.text(`${progressVal > 0 ? progressVal.toFixed(2) + '%' : '-'}`, 145, y + (rowHeight / 2) + 1.1, { align: 'center' });
 
           doc.setFont('Helvetica', 'bold');
           doc.setTextColor(15, 23, 42);
-          doc.text(`${contrib > 0 ? contrib.toFixed(2) + '%' : '-'}`, 178, y + 4.2, { align: 'center' });
+          doc.text(`${contrib > 0 ? contrib.toFixed(2) + '%' : '-'}`, 178, y + (rowHeight / 2) + 1.1, { align: 'center' });
 
           doc.setDrawColor(241, 245, 249);
           doc.setLineWidth(0.15);
-          doc.line(15, y + 5.8, 195, y + 5.8);
+          doc.line(15, y + rowHeight, 195, y + rowHeight);
 
-          y += 5.8;
+          y += rowHeight;
         });
 
         // Extra footnote inside table
@@ -1273,6 +1454,37 @@ export default function App() {
       y = weatherOffsetY + 3;
     });
     }
+
+    // Add Signature Block "Ttd / Project Manajer" on the last page with proper boundary checks
+    const signatureHeight = 35;
+    if (y + signatureHeight > 265) {
+      // Draw footer for previous page before adding a new page
+      drawPageFooter(currentPage);
+      doc.addPage();
+      currentPage++;
+      drawWatermark();
+      y = 20; // safe top margin on the new page
+    } else {
+      y += 8; // gentle spacing before the signature block on the same page
+    }
+
+    // Draw Signature Block on right side
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105); // Slate-600
+    doc.text('Ttd,', 145, y);
+
+    y += 18; // space for physical signature area
+    
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(15, 23, 42); // Slate-900
+    doc.text('Project Manajer', 145, y);
+
+    // Subtle line below Project Manajer name to look extremely official
+    doc.setDrawColor(148, 163, 184); // Slate-400
+    doc.setLineWidth(0.35);
+    doc.line(145, y + 1.2, 185, y + 1.2);
 
     // Draw final page footer for the last page
     drawPageFooter(currentPage);
@@ -1737,11 +1949,13 @@ export default function App() {
             )}
 
             {/* AI Advisor Panel */}
+            {(viewMode === 'all' || viewMode === 'weekly' || viewMode === 'daily') && (
+              <AIStudyPanel reportData={filteredData} onAnalysisChange={setAnalysis} />
+            )}
+
+            {/* Daily Report Detailed Timeline */}
             {(viewMode === 'all' || viewMode === 'daily') && (
-              <>
-                <AIStudyPanel reportData={filteredData} onAnalysisChange={setAnalysis} />
-                <ReportTimeline data={filteredTimelineData} />
-              </>
+              <ReportTimeline data={filteredTimelineData} />
             )}
 
           </div>

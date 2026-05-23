@@ -13,7 +13,8 @@ import {
   Briefcase,
   Sliders,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  Sparkles
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -27,6 +28,7 @@ import {
   ReferenceLine
 } from 'recharts';
 import { WeeklyProgressResponse, WeeklyProgressCategory } from '../types';
+import { fetchWeeklyProgressDirectly } from '../utils/fallbackFetcher';
 
 export function WeeklyProgressPanel() {
   const [data, setData] = useState<WeeklyProgressResponse | null>(null);
@@ -40,19 +42,35 @@ export function WeeklyProgressPanel() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch('/api/weekly-progress');
-        if (!res.ok) throw new Error("Gagal mengambil data progres mingguan.");
-        const resData = await res.json();
-        if (resData.success) {
-          setData(resData);
+        let fetchedWeekly: WeeklyProgressResponse | null = null;
+
+        try {
+          const res = await fetch('/api/weekly-progress');
+          if (res.ok) {
+            const resData = await res.json();
+            if (resData.success) {
+              fetchedWeekly = resData;
+            }
+          }
+        } catch (apiErr) {
+          console.warn("Backend /api/weekly-progress not accessible. Falling back to client-side Google Sheet TSV parser...", apiErr);
+        }
+
+        if (!fetchedWeekly) {
+          console.log("WeeklyProgressPanel fetching weekly progress directly from Google Sheets TSV...");
+          fetchedWeekly = await fetchWeeklyProgressDirectly();
+        }
+
+        if (fetchedWeekly) {
+          setData(fetchedWeekly);
           
           // Auto-select latest week with actual progress > 0
-          const latestIdx = resData.riil.reduce((acc: number, val: number, idx: number) => {
+          const latestIdx = fetchedWeekly.riil.reduce((acc: number, val: number, idx: number) => {
             return val > 0 ? idx : acc;
           }, 0);
           setSelectedWeekIdx(latestIdx);
         } else {
-          throw new Error(resData.error || "Gagal mengolah data progres.");
+          throw new Error("Gagal memproses data laporan mingguan.");
         }
       } catch (err: any) {
         console.error(err);
@@ -377,11 +395,11 @@ export function WeeklyProgressPanel() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* CHART CONTAINER SECTION (2 Col) */}
-        <div className="lg:col-span-2 bg-white border border-sky-100/60 rounded-3xl p-6 shadow-md friendly-card-shadow flex flex-col">
+        <div className="lg:col-span-2 bg-white border border-sky-100/60 rounded-3xl p-6 shadow-md friendly-card-shadow flex flex-col transition-all duration-350 hover:scale-[1.008] hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-300/70">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
               <h4 className="text-sm font-black text-slate-800 font-sans flex items-center gap-2">
-                <span className="text-amber-550">📈</span> Grafik S-Curve Penyelarasan Progres
+                <span className="text-amber-550 animate-pulse">📈</span> Grafik S-Curve Penyelarasan Progres
               </h4>
               <p className="text-[11px] text-slate-400 font-sans">Membandingkan garis target rencana terhadap progress rill</p>
             </div>
@@ -412,7 +430,12 @@ export function WeeklyProgressPanel() {
           </div>
 
           {/* S-CURVE RECHARTS STAGE */}
-          <div className="h-[280px] w-full mt-2">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="h-[280px] w-full mt-2 relative"
+          >
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={filteredChartData}
@@ -441,13 +464,14 @@ export function WeeklyProgressPanel() {
                   width={40}
                 />
                 <Tooltip 
+                  cursor={{ stroke: '#f59e0b', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const item = payload[0].payload;
                       const dVal = item['Deviasi (%)'];
                       const isPositive = dVal >= 0;
                       return (
-                        <div className="bg-slate-900/95 backdrop-blur-md text-white border border-slate-750 p-3 rounded-xl shadow-lg text-2xs font-sans">
+                        <div className="bg-slate-900/95 backdrop-blur-md text-white border border-slate-750 p-3 rounded-xl shadow-lg text-2xs font-sans transition-all duration-200">
                           <p className="font-bold text-slate-300 font-mono mb-1.5">{item.plainDate} (W-{item.weekIndex + 1})</p>
                           <div className="space-y-1">
                             <p className="flex justify-between gap-6">
@@ -494,6 +518,9 @@ export function WeeklyProgressPanel() {
                   strokeWidth={2.5}
                   fillOpacity={1} 
                   fill="url(#colorRencana)" 
+                  activeDot={{ r: 6, stroke: '#ffffff', strokeWidth: 2, fill: '#4f46e5' }}
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
                 <Area 
                   type="monotone" 
@@ -503,10 +530,13 @@ export function WeeklyProgressPanel() {
                   strokeWidth={3}
                   fillOpacity={1} 
                   fill="url(#colorRiil)" 
+                  activeDot={{ r: 7, stroke: '#ffffff', strokeWidth: 2, fill: '#10b981' }}
+                  animationDuration={800}
+                  animationEasing="ease-out"
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
+          </motion.div>
 
           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 mt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs leading-relaxed font-sans font-medium">
             <div className="flex items-center gap-2">
@@ -618,6 +648,106 @@ export function WeeklyProgressPanel() {
           )}
         </div>
       </div>
+
+      {/* DYNAMIC WEEKLY PROGRESS ANALYSIS (Laporan Analisa Mingguan) */}
+      {activeWeekInfo && (
+        <motion.div 
+          className="bg-gradient-to-br from-teal-950 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 shadow-md border border-slate-800"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-amber-500 rounded-2xl text-slate-950 shadow-md">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black font-sans tracking-tight text-white">Laporan Analisa Utama Mingguan — M-{activeWeekInfo.weekNum}</h4>
+                <p className="text-[10px] text-slate-400 font-sans">Kompilasi dan penafsiran statistik deviasi grafik fisik S-Curve ({activeWeekInfo.date})</p>
+              </div>
+            </div>
+            <span className="text-[10px] uppercase font-mono font-extrabold px-3 py-1 bg-white/15 text-amber-300 rounded-xl border border-white/10 self-start sm:self-auto">
+              Status Koefisien: {activeWeekInfo.actual > 0 ? (activeWeekInfo.deviation >= 0 ? 'On-Track (Surplus)' : 'Critical (Delayed)') : 'Proyeksi Virtual'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed font-sans text-slate-300">
+            {/* Left Col: Executive Summary / Ulasan Kinerja */}
+            <div className="space-y-3.5">
+              <p className="font-bold text-white border-b border-white/10 pb-1.5 uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                <span className="text-amber-500">◆</span> Ulasan Kemajuan Fisik & Penyimpangan
+              </p>
+              <p>
+                Pada pekan kalender <strong className="text-white font-bold">Minggu ke-{activeWeekInfo.weekNum} ({activeWeekInfo.date})</strong>, 
+                target kumulatif ideal berdasarkan rancangan rencana awal proyek adalah sebesar <strong className="text-sky-300 font-bold">{activeWeekInfo.plan.toFixed(3)}%</strong>. 
+                Melalui penghitungan volume fisik riil terpasang di lapangan, progres aktual berhasil tercatat di angka <strong className="text-emerald-400 font-bold">{activeWeekInfo.actual > 0 ? `${activeWeekInfo.actual.toFixed(3)}%` : 'Belum Mulai'}</strong>.
+              </p>
+              {activeWeekInfo.actual > 0 ? (
+                <p>
+                  Dengan performa pengerjaan tersebut, kalkulasi penyelarasan menghasilkan deviasi bersih kumulatif senilai {' '}
+                  <span className={`font-mono font-bold px-1.5 py-0.5 rounded-md ${activeWeekInfo.deviation >= 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/25' : 'bg-rose-500/20 text-rose-400 border border-rose-500/25'}`}>
+                    {activeWeekInfo.deviation >= 0 ? '+' : ''}{activeWeekInfo.deviation.toFixed(3)}%
+                  </span>.
+                  {activeWeekInfo.deviation >= 0 
+                    ? ` Pencapaian surplus ini mengonfirmasi kelancaran alokasi tenaga kerja harian serta kestabilan pasokan material utama (Semen/Besi) di lapangan. Metode kerja dipastikan efektif dan berada pada trayek waktu yang tepat.`
+                    : ` Deviasi negatif mengindikasikan adanya perlambatan minor di bawah garis target acuan. Beberapa sub-pekerjaan menuntut perhatian intensif untuk mencegah akumulasi deviasi kritis seiring bertambahnya pekan.`
+                  }
+                </p>
+              ) : (
+                <p className="italic text-slate-400 bg-slate-800/40 p-3 rounded-xl border border-slate-750">
+                  ⚠️ Kegiatan fisik konstruksi terintegrasi belum dijadwalkan aktif secara kumulatif pada periode minggu ini. Gunakan dropdown pekan terfokus di atas untuk meninjau pekan aktif sebelumnya.
+                </p>
+              )}
+            </div>
+
+            {/* Right Col: Strategic S-Curve Recommendations */}
+            <div className="space-y-3.5">
+              <p className="font-bold text-white border-b border-white/10 pb-1.5 uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                <span className="text-amber-500">◆</span> Rekomendasi Mitigasi & Akselerasi S-Curve
+              </p>
+              <ul className="space-y-2.5 text-[11px]">
+                {activeWeekInfo.actual > 0 ? (
+                  activeWeekInfo.deviation >= 0 ? (
+                    <>
+                      <li className="flex items-start gap-2 bg-emerald-500/5 p-2 rounded-xl border border-emerald-500/10">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span><strong>Pertahankan Jalur Pasokan Utas</strong>: Prioritaskan pengadaan material interior (Pekerjaan Interior - Bobot 53.83%) karena memegang persentase bobot terbesar dari total koefisien kontrak harian.</span>
+                      </li>
+                      <li className="flex items-start gap-2 bg-emerald-500/5 p-2 rounded-xl border border-emerald-500/10">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span><strong>Proteksi Mix Beton</strong>: Jaga ketersediaan semen dan beton ready-mix di zona teduh untuk mengantisipasi sirkulasi cuaca hujan mendadak demi menjamin mutu sisa pengerjaan.</span>
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li className="flex items-start gap-2 bg-rose-500/5 p-2 rounded-xl border border-rose-500/10">
+                        <span className="text-rose-400 font-bold">⚠</span>
+                        <span><strong>Atur Shift Kelompok Kerja</strong>: Terapkan sistem penambahan jam kerja (lembur) pada zona arsitektural di bawah pengawasan mandor secara ketat untuk menembus deviasi negatif terhitung.</span>
+                      </li>
+                      <li className="flex items-start gap-2 bg-rose-500/5 p-2 rounded-xl border border-rose-500/10">
+                        <span className="text-rose-400 font-bold">⚠</span>
+                        <span><strong>Deteksi Penyumbatan Logistik</strong>: Periksa sirkulasi bekesing cetakan atau instalasi penunjang yang mengalami penundaan di lapangan dan lakukan modifikasi sub-tahapan yang aman.</span>
+                      </li>
+                    </>
+                  )
+                ) : (
+                  <>
+                    <li className="flex items-start gap-2 bg-slate-800/50 p-2 rounded-xl border border-slate-700/50 text-slate-400">
+                      <span>•</span>
+                      <span><strong>Pra-Inspeksi Sub-Kontraktor</strong>: Laksanakan koordinasi persiapan peralatan konstruksi berat serta personil kelompok kerja sebelum gelombang mingguan diaktifkan secara masif.</span>
+                    </li>
+                    <li className="flex items-start gap-2 bg-slate-800/50 p-2 rounded-xl border border-slate-700/50 text-slate-400">
+                      <span>•</span>
+                      <span><strong>Sinkronisasi Koefisien Rencana</strong>: Validasi kesesuaian target minggu pertama pengerjaan aktif agar deviasi awal tetap berada pada toleransi yang direkomendasikan pengawas.</span>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* SECTORAL WORKS CATEGORIES TABLE BLOCK */}
       <div className="bg-white border border-sky-100/60 rounded-3xl p-6 shadow-md friendly-card-shadow">
