@@ -1,0 +1,239 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-brand-50: #fffbeb;
+  --color-brand-100: #fef3c7;
+  --color-brand-500: #f59e0b;
+  --color-brand-600: #d97706;
+}
+
+/* Custom Scrollbar styled for friendly light theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border: 3px solid #f1f5f9;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth active spring animations & custom 3D card depth transitions */
+.transition-3d {
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease;
+}
+
+/* Custom friendly 3D Bevel, glow effects and shadow styles */
+.shadow-3d-amber {
+  box-shadow: 
+    0 1px 0px rgba(255, 255, 255, 0.8) inset,
+    0 8px 24px -4px rgba(245, 158, 11, 0.12),
+    0 4px 12px -2px rgba(245, 158, 11, 0.06),
+    0 3px 0px 0px #f59e0b;
+}
+.shadow-3d-amber-hover {
+  transform: perspective(800px) rotateX(2.5deg) rotateY(-1.5deg) translateY(-6px);
+  box-shadow: 
+    0 2px 0px rgba(255, 255, 255, 0.9) inset,
+    0 20px 35px -8px rgba(245, 158, 11, 0.22),
+    0 10px 20px -6px rgba(245, 158, 11, 0.12),
+    0 5px 0px 0px #d97706;
+}
+
+.shadow-3d-emerald {
+  box-shadow: 
+    0 1px 0px rgba(255, 255, 255, 0.8) inset,
+    0 8px 24px -4px rgba(16, 185, 129, 0.12),
+    0 4px 12px -2px rgba(16, 185, 129, 0.06),
+    0 3px 0px 0px #10b981;
+}
+.shadow-3d-emerald-hover {
+  transform: perspective(800px) rotateX(2.5deg) rotateY(-1.5deg) translateY(-6px);
+  box-shadow: 
+    0 2px 0px rgba(255, 255, 255, 0.9) inset,
+    0 20px 35px -8px rgba(16, 185, 129, 0.22),
+    0 10px 20px -6px rgba(16, 185, 129, 0.12),
+    0 5px 0px 0px #059669;
+}
+
+.shadow-3d-sky {
+  box-shadow: 
+    0 1px 0px rgba(255, 255, 255, 0.8) inset,
+    0 8px 24px -4px rgba(14, 165, 233, 0.12),
+    0 4px 12px -2px rgba(14, 165, 233, 0.06),
+    0 3px 0px 0px #0ea5e9;
+}
+.shadow-3d-sky-hover {
+  transform: perspective(800px) rotateX(2.5deg) rotateY(-1.5deg) translateY(-6px);
+  box-shadow: 
+    0 2px 0px rgba(255, 255, 255, 0.9) inset,
+    0 20px 35px -8px rgba(14, 165, 233, 0.22),
+    0 10px 20px -6px rgba(14, 165, 233, 0.12),
+    0 5px 0px 0px #0284c7;
+}
+
+.shadow-3d-indigo {
+  box-shadow: 
+    0 1px 0px rgba(255, 255, 255, 0.8) inset,
+    0 8px 24px -4px rgba(99, 102, 241, 0.12),
+    0 4px 12px -2px rgba(99, 102, 241, 0.06),
+    0 3px 0px 0px #6366f1;
+}
+.shadow-3d-indigo-hover {
+  transform: perspective(800px) rotateX(2.5deg) rotateY(-1.5deg) translateY(-6px);
+  box-shadow: 
+    0 2px 0px rgba(255, 255, 255, 0.9) inset,
+    0 20px 35px -8px rgba(99, 102, 241, 0.22),
+    0 10px 20px -6px rgba(99, 102, 241, 0.12),
+    0 5px 0px 0px #4f46e5;
+}
+
+/* Elegant soft depth card styling (friendly layout) */
+.friendly-card-shadow {
+  box-shadow: 
+    0 10px 30px -5px rgba(148, 163, 184, 0.12), 
+    0 4px 12px -2px rgba(148, 163, 184, 0.06),
+    0 0 0 1px rgba(148, 163, 184, 0.08);
+}
+.friendly-card-shadow-hover:hover {
+  box-shadow: 
+    0 20px 40px -10px rgba(148, 163, 184, 0.22), 
+    0 8px 16px -4px rgba(148, 163, 184, 0.12),
+    0 0 0 1px rgba(148, 163, 184, 0.12);
+  transform: translateY(-2px);
+}
+
+/* Special button depth states using skeuomorphic tactile style */
+.btn-3d-active {
+  transition: all 0.1s ease;
+}
+.btn-3d-active:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0px 0px currentColor;
+}
+
+/* Grid overlay background to make it ultra-modern & innovative */
+.bg-friendly-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(14, 165, 233, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(14, 165, 233, 0.03) 1px, transparent 1px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Pulsing accent ring */
+@keyframes neonPulse {
+  0%, 100% { opacity: 0.35; filter: drop-shadow(0 0 2px var(--color-brand-100)); }
+  50% { opacity: 0.8; filter: drop-shadow(0 0 8px var(--color-brand-500)); }
+}
+.neon-glow {
+  animation: neonPulse 3s infinite ease-in-out;
+}
+
+/* @media print: High-fidelity print style overrides for beautiful browser-based reporting */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 15mm 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 10pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide navigation controls, menus, buttons, search/filter inputs, and absolute floating elements */
+  header,
+  footer,
+  aside,
+  button,
+  input,
+  select,
+  a,
+  .fixed,
+  .sticky,
+  #btn-floating-view-selector,
+  .bg-friendly-grid,
+  .bg-slate-900\/95,
+  .backdrop-blur-md,
+  .p-4\.5.flex.flex-col.sm\:flex-row.sm\:items-center,
+  .bg-white\/80\.backdrop-blur-md {
+    display: none !important;
+  }
+
+  /* Force full width on main layout container */
+  main {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  /* Style standard cards as simplified neat printed compartments with basic borders */
+  .friendly-card-shadow,
+  .bg-white,
+  .border,
+  .rounded-3xl,
+  .rounded-2xl {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    border-radius: 8px !important;
+    margin-bottom: 5mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Handle grid layouts smoothly on printout */
+  .grid {
+    display: block !important;
+  }
+
+  /* Layout headings page-break rules */
+  h1, h2, h3, h4, h5, h6 {
+    color: #0f172a !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Text color corrections for clarity */
+  .text-slate-500, .text-slate-400, .text-slate-350, .text-slate-300 {
+    color: #475569 !important;
+  }
+
+  .bg-slate-50, .bg-slate-100, .bg-slate-50\/20 {
+    background-color: #f8fafc !important;
+  }
+
+  /* Keep custom charts inside visible area */
+  svg, canvas, iframe {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
