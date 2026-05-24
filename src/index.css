@@ -166,15 +166,15 @@
   }
 
   /* Hide navigation controls, menus, buttons, search/filter inputs, and absolute floating elements */
-  header,
+  .no-print,
   footer,
   aside,
   button,
   input,
   select,
-  a,
+  a:not([href^="mailto:"]):not([href^="tel:"]),
   .fixed,
-  .sticky,
+  .sticky:not(header),
   #btn-floating-view-selector,
   .bg-friendly-grid,
   .bg-slate-900\/95,
@@ -182,6 +182,24 @@
   .p-4\.5.flex.flex-col.sm\:flex-row.sm\:items-center,
   .bg-white\/80\.backdrop-blur-md {
     display: none !important;
+  }
+
+  /* Reset sidebar left padding and margin for print */
+  header, main, div[class*="md:pl-"], div[class*="lg:pl-"], .flex-1 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  header {
+    position: static !important;
+    box-shadow: none !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding: 12px 0 !important;
+    margin-bottom: 6mm !important;
+    background: transparent !important;
+    display: block !important;
   }
 
   /* Force full width on main layout container */

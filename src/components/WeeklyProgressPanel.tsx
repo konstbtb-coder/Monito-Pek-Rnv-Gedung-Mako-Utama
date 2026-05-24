@@ -15,7 +15,13 @@ import {
   ChevronRight,
   HelpCircle,
   Sparkles,
-  Search
+  Search,
+  AlertTriangle,
+  Timer,
+  Gauge,
+  Info,
+  CheckSquare,
+  ArrowRight
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -759,6 +765,334 @@ export function WeeklyProgressPanel() {
             </div>
           </div>
         </motion.div>
+      )}
+
+      {/* COMPREHENSIVE TIME & PROGRESS INTERACTIVE ANALYSIS & AI ADVISE PANEL */}
+      {data && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* BOX 1: ANALISA SISA WAKTU PEKERJAAN */}
+            <motion.div 
+              className="bg-white border border-sky-100/60 rounded-3xl p-6 shadow-md friendly-card-shadow flex flex-col justify-between hover:scale-[1.005] transition-all duration-300"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4.5">
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 bg-rose-50 rounded-xl text-rose-500">
+                      <Timer className="w-5 h-5 animate-pulse" />
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-800 font-sans">Analisa Sisa Waktu Pekerjaan</h4>
+                      <p className="text-[10px] text-slate-400 font-sans">Monitor durasi kalender dan batas kontrak harian</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] uppercase font-mono font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-100">
+                    Sisa {Math.max(0, 210 - (overallLatestActiveWeek * 7))} Hari Lagi
+                  </span>
+                </div>
+
+                <div className="space-y-5">
+                  {/* Calendar Information Row */}
+                  <div className="grid grid-cols-2 gap-3.5 text-slate-700 bg-slate-50 border border-slate-100 p-3.5 rounded-2xl">
+                    <div>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-sans block">Format Kontrak</span>
+                      <span className="font-extrabold text-xs font-sans text-slate-900 block mt-0.5">210 Hari Kalender (HK)</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-sans block">Batas Akhir Kontrak</span>
+                      <span className="font-extrabold text-xs font-sans text-indigo-900 block mt-0.5">21 Desember 2026</span>
+                    </div>
+                  </div>
+
+                  {/* Multi-layered Progress Track for Elapsed Days */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-2xs font-extrabold font-sans">
+                      <span className="text-slate-500 flex items-center gap-1">
+                        <span className="inline-block w-2.5 h-2.5 bg-indigo-500 rounded-sm"></span>
+                        Terlewati: {Math.min(210, overallLatestActiveWeek * 7)} HK ({((Math.min(210, overallLatestActiveWeek * 7) / 210) * 100).toFixed(1)}%)
+                      </span>
+                      <span className="text-amber-600 flex items-center gap-1">
+                        <span className="inline-block w-2.5 h-2.5 bg-amber-400 rounded-sm"></span>
+                        Sisa: {Math.max(0, 210 - (overallLatestActiveWeek * 7))} HK ({((Math.max(0, 210 - (overallLatestActiveWeek * 7)) / 210) * 100).toFixed(1)}%)
+                      </span>
+                    </div>
+
+                    <div className="w-full bg-slate-100 h-3 rounded-full flex overflow-hidden border border-slate-200/40">
+                      <div 
+                        className="bg-indigo-600 h-full transition-all duration-500"
+                        style={{ width: `${(Math.min(210, overallLatestActiveWeek * 7) / 210) * 100}%` }}
+                      />
+                      <div 
+                        className="bg-amber-400 h-full transition-all duration-500"
+                        style={{ width: `${(Math.max(0, 210 - (overallLatestActiveWeek * 7)) / 210) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Contextual Description */}
+                  <p className="text-xs text-slate-500 leading-relaxed font-sans">
+                    Saat ini proyek berada di <strong className="text-slate-700">Minggu ke-{overallLatestActiveWeek} (Periode {data.headers[overallLatestActiveWeek - 1] || ""})</strong>. Kontrak pengerjaan secara kontinu dimulai dari <strong className="text-slate-700">25 Mei 2026</strong> dan wajib diserahterimakan pada <strong className="text-slate-700">21 Desember 2026</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-[10px] font-semibold text-slate-400 font-sans">
+                <span>Rasio Pembakaran Waktu:</span>
+                <span className="font-bold text-slate-700 font-mono">
+                  {((Math.min(210, overallLatestActiveWeek * 7) / 210) * 100).toFixed(2)}% Terpakai
+                </span>
+              </div>
+            </motion.div>
+
+            {/* BOX 2: ANALISA PEKERJAAN TERHADAP SISA WAKTU */}
+            <motion.div 
+              className="bg-white border border-sky-100/60 rounded-3xl p-6 shadow-md friendly-card-shadow flex flex-col justify-between hover:scale-[1.005] transition-all duration-300"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4.5">
+                  <div className="flex items-center gap-2">
+                    <span className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
+                      <Gauge className="w-5 h-5" />
+                    </span>
+                    <div>
+                      <h4 className="text-sm font-black text-slate-800 font-sans">Kesesuaian Progres & Waktu</h4>
+                      <p className="text-[10px] text-slate-400 font-sans">Kalkulasi kecepatan run-rate kumulatif</p>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] uppercase font-mono font-black px-2 py-0.5 rounded-lg border ${
+                    (100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek) > (100 / data.headers.length)
+                      ? 'text-rose-600 bg-rose-50 border-rose-100'
+                      : 'text-emerald-700 bg-emerald-50 border-emerald-100'
+                  }`}>
+                    {(100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek) > (100 / data.headers.length) 
+                      ? 'BUTUH AKSELERASI' 
+                      : 'KECEPATAN AMAN'}
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Key Stats Grid */}
+                  <div className="grid grid-cols-2 gap-3 pb-2">
+                    <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100/80">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-sans block">Sisa Pembobotan Kerja</span>
+                      <span className="font-extrabold text-sm font-sans font-mono text-slate-900 block mt-0.5">{(100 - overallMaxActual).toFixed(3)}%</span>
+                    </div>
+                    <div className="bg-slate-50 p-2.5 rounded-2xl border border-slate-100/80">
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-sans block">Sisa Pekan Pelaksanaan</span>
+                      <span className="font-extrabold text-sm font-sans font-mono text-slate-900 block mt-0.5">{Math.max(1, data.headers.length - overallLatestActiveWeek)} Minggu</span>
+                    </div>
+                  </div>
+
+                  {/* Speed comparison bar graph design */}
+                  <div className="space-y-3.5 bg-slate-50/50 p-3.5 border border-slate-100 rounded-2xl">
+                    <span className="text-[9px] font-extrabold text-slate-5 text-indigo-950 uppercase tracking-wider block">PROYEKSI INTEGRITAS KECEPATAN (RUN-RATE)</span>
+                    
+                    <div className="space-y-2.5">
+                      {/* Baseline Plan Speed */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-2xs font-bold text-slate-500 font-sans">
+                          <span>Kecepatan Rencana Dasar (Baseline Rate)</span>
+                          <span className="font-mono text-slate-705">{(100 / data.headers.length).toFixed(3)}% / Minggu</span>
+                        </div>
+                        <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                          <div className="bg-slate-500 h-full rounded-full" style={{ width: `${(100 / data.headers.length) * 15}%` }} />
+                        </div>
+                      </div>
+
+                      {/* Required Speed */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-2xs font-bold font-sans">
+                          <span className="text-slate-800">Kecepatan Harus Diperoleh (Required Run-Rate)</span>
+                          <span className="font-mono text-indigo-700 font-black">
+                            {((100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek)).toFixed(3)}% / Minggu
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${
+                              ((100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek)) > (100 / data.headers.length)
+                                ? 'bg-rose-500' 
+                                : 'bg-emerald-500'
+                            }`}
+                            style={{ width: `${((100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek)) * 15}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-2xs sm:text-xs text-slate-500 leading-relaxed font-sans mt-1">
+                    {((100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek)) > (100 / data.headers.length) ? (
+                      <span>
+                        ⚠️ Kecepatan mingguan yang dibutuhkan (<strong className="text-slate-800 font-semibold">{((100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek)).toFixed(3)}%</strong>) melebihi kurva rencana dasar awal (<strong className="text-slate-800">{(100 / data.headers.length).toFixed(3)}%</strong>). Anda harus mempercepat progres sebesar <strong className="text-rose-600 font-bold">{(((100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek)) / (100 / data.headers.length) * 100 - 100).toFixed(1)}% lebih cepat</strong> di sisa pekan.
+                      </span>
+                    ) : (
+                      <span>
+                        ✨ Kecepatan pengerjaan Anda saat ini berada dalam rasio aman. Rata-rata bobot mingguan yang harus diselesaikan untuk target selesai tepat waktu hanya <strong className="text-emerald-700 font-bold">{((100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek)).toFixed(3)}%</strong> harian/mingguan.
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-[10px] font-semibold text-slate-400 font-sans">
+                <span>Rasio Target vs Sisa Waktu:</span>
+                <span className={`font-bold ${
+                  ((100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek)) > (100 / data.headers.length)
+                    ? 'text-rose-600'
+                    : 'text-emerald-600'
+                }`}>
+                  {(((100 - overallMaxActual) / Math.max(1, data.headers.length - overallLatestActiveWeek)) / (100 / data.headers.length)).toFixed(2)}x Kecepatan Dasar
+                </span>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* DYNAMIC SMART PLANNER & AI WARNING ALERTS */}
+          <motion.div 
+            className={`border rounded-3xl p-6 shadow-md border-opacity-70 ${
+              latestDeviation < -2.0 
+                ? 'bg-gradient-to-r from-rose-950 via-slate-900 to-[#1e141a] text-white border-rose-800/80' 
+                : latestDeviation < 0.0
+                ? 'bg-gradient-to-r from-amber-950/90 via-slate-900 to-[#1a1c12] text-white border-amber-800/60'
+                : 'bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white border-slate-800'
+            }`}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-2xl shadow-md ${
+                  latestDeviation < -2.0 
+                    ? 'bg-rose-550 text-white animate-pulse' 
+                    : latestDeviation < 0.0
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'bg-indigo-650 text-white'
+                }`}>
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black font-sans tracking-tight text-white flex items-center gap-1.5">
+                    Asisten Rekomendasi Pintar • Papan Peringatan AI
+                  </h4>
+                  <p className="text-[10px] text-slate-400 font-sans">Saran terintegrasi untuk mencegah keterlambatan serah terima (Co-Pilot Konstruksi)</p>
+                </div>
+              </div>
+              <span className={`text-[10px] uppercase font-mono font-extrabold px-3 py-1 rounded-xl border flex items-center gap-1 bg-white/5 ${
+                latestDeviation < -2.0 
+                  ? 'text-rose-450 border-rose-500/40' 
+                  : latestDeviation < 0.0
+                  ? 'text-amber-400 border-amber-500/30'
+                  : 'text-cyan-400 border-cyan-500/30'
+              }`}>
+                <AlertTriangle className="w-3 h-3" />
+                Sinyal: {latestDeviation < -2.0 ? '🚨 DARURAT (CRITICAL LAGGING)' : latestDeviation < 0.0 ? '⚠️ PERCEPATAN (BEHIND SCHEDULE)' : '🌸 AMAN (PREVENTIVE DEFENSE)'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed font-sans text-slate-350">
+              
+              {/* Columns left: Dynamic summary of AI Alert */}
+              <div className="space-y-3.5">
+                <p className="font-bold text-white border-b border-white/10 pb-1.5 uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <span>🎯</span> DIAGNOSIS AI TERHADAP PROGRES LAPANGAN
+                </p>
+                {latestDeviation < -2.0 ? (
+                  <div className="space-y-3">
+                    <p className="text-rose-100 font-semibold bg-rose-500/10 border border-rose-500/20 p-3 rounded-2xl">
+                      <strong>🚨 PERINGATAN DARURAT STRUKTURAL:</strong> Deviasi pengerjaan Anda saat ini berada di angka negatif kritis <span className="text-rose-400 font-black">{latestDeviation.toFixed(3)}%</span>. Keterlambatan kumulatif ini dapat memicu keterlambatan berantai (dampak domino) ke fase pekerjaan interior dan penataan estetika gedung Mako jika tidak diambil tindakan luar biasa sekarang juga.
+                    </p>
+                    <p>
+                      Sisa waktu pengerjaan sebanyak <strong className="text-white">{Math.max(0, 210 - (overallLatestActiveWeek * 7))} hari kalender</strong> mengharuskan peningkatan produktivitas kerja harian secara radikal demi mendobrak ketertinggalan bobot.
+                    </p>
+                  </div>
+                ) : latestDeviation < 0.0 ? (
+                  <div className="space-y-3">
+                    <p className="text-amber-100 font-semibold bg-amber-500/10 border border-amber-500/20 p-3 rounded-2xl">
+                      <strong>⚠️ WASPADA DEVIASI MINOR:</strong> Proyek berada di bawah jalur rencana dengan deviasi <span className="text-amber-400 font-black">{latestDeviation.toFixed(3)}%</span>. Meskipun belum masuk kategori darurat kritis, pola perlambatan ini lazim mengindikasikan penyumbatan logistik bekesing baja, keterbatasan scaffolding, atau inefisiensi jam efektif kerja di lapangan.
+                    </p>
+                    <p>
+                      Sisa waktu pelaksanaan sebanyak <strong className="text-white">{Math.max(0, 210 - (overallLatestActiveWeek * 7))} hari</strong> adalah durasi memadai untuk melakukan normalisasi grafik. Kuncinya berada pada penataan mitigasi cuaca harian dan sinkronisasi sub-kontraktor.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-emerald-100 font-semibold bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-2xl text-xs">
+                      <strong>🌸 PERFORMA OPTIMAL (ON SCHEDULE):</strong> Selamat! Proyek Anda berada di jalur aman dengan keuntungan deviasi surplus sebesar <span className="text-emerald-400 font-black">+{latestDeviation.toFixed(3)}%</span>. Jam kerja produktif, pembagian kru arsitektural-mep, dan mobilisasi material terbukti bekerja sinkron dengan sangat baik di lapangan.
+                    </p>
+                    <p>
+                      Meskipun demikian, dengan sisa waktu <strong className="text-white">{Math.max(0, 210 - (overallLatestActiveWeek * 7))} hari kalender</strong>, risiko eksternal seperti musim penghujan di triwulan akhir 2026 wajib diantisipasi dengan mengunci pasokan material sebelum beralih penuh ke pekerjaan basah interior.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Columns right: Strategy List recommendation */}
+              <div className="space-y-3.5">
+                <p className="font-bold text-white border-b border-white/10 pb-1.5 uppercase tracking-wider text-[10px] font-mono flex items-center gap-1.5">
+                  <span>🛠️</span> STRATEGI TINDAKAN MITIGASI DURASI KONTRAK
+                </p>
+                <ul className="space-y-2.5 text-[11px] text-slate-355">
+                  {latestDeviation < -2.0 ? (
+                    <>
+                      <li className="flex items-start gap-2.5 bg-rose-500/5 p-2.5 rounded-xl border border-rose-500/20 text-rose-100">
+                        <span className="text-rose-450 font-black text-xs">01</span>
+                        <span><strong>Crash Schedule (Overtime Shift)</strong>: Tambah jam kerja (lembur terstruktur) minimal 3 jam per hari khusus kelompok kerja pembesian dan pengecoran pelat lantai atas untuk merebut kembali bobot waktu yang terbuang.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-rose-500/5 p-2.5 rounded-xl border border-rose-500/20 text-rose-100">
+                        <span className="text-rose-450 font-black text-xs">02</span>
+                        <span><strong>Mobilisasi Tenaga Cadangan</strong>: Instruksikan PT. Bina Konstruksi Abadi untuk segera mendatangkan minimal 2 kelompok tukang batu dan tukang kayu tambahan demi memecah rintangan pengerjaan fasad.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-rose-500/5 p-2.5 rounded-xl border border-rose-500/20 text-rose-100">
+                        <span className="text-rose-450 font-black text-xs">03</span>
+                        <span><strong>Prioritas Jalur Kritis (Interior & Pasangan)</strong>: Segmentasikan pengerjaan pasangan interior yang bernilai bobot ekonomi tinggi (interior menyerap proporsi 53.83%) agar penambahan progres bernilai maksimal pada laporan mingguan mendatang.</span>
+                      </li>
+                    </>
+                  ) : latestDeviation < 0.0 ? (
+                    <>
+                      <li className="flex items-start gap-2.5 bg-amber-500/5 p-2.5 rounded-xl border border-amber-500/20 text-amber-100">
+                        <span className="text-amber-400 font-bold text-xs">01</span>
+                        <span><strong>Fast-Tracking Alur Kerja</strong>: Mulai pengerjaan instalasi pemipaan MEP (Air Bersih/Kotor) dan perkabelan paralel di lantai bawah tanpa menunggu struktur beton lantai atas selesai 100%.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-amber-500/5 p-2.5 rounded-xl border border-amber-500/20 text-amber-100">
+                        <span className="text-amber-400 font-bold text-xs">02</span>
+                        <span><strong>Optimasi Buffer Pengiriman</strong>: Pastikan pemesanan unit ubin keramik dan cat interior dalam antrean logistik aman terkonfirmasi datang 7 hari sebelum jadwal aplikasi guna mengeliminasi jeda waktu tunggu (idle).</span>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-amber-500/5 p-2.5 rounded-xl border border-amber-500/20 text-amber-100">
+                        <span className="text-amber-400 font-bold text-xs">03</span>
+                        <span><strong>Sistem Evaluasi Harian</strong>: Selenggarakan rapat koordinasi terbatas (Briefing Harian 15 menit) setiap pagi dipimpin oleh Site Manager untuk langsung mengeksekusi kendala operasional lapangan hari itu juga.</span>
+                      </li>
+                    </>
+                  ) : (
+                    <>
+                      <li className="flex items-start gap-2.5 bg-emerald-500/5 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-100">
+                        <span className="text-emerald-400 font-black text-xs">01</span>
+                        <span><strong>Pertahankan Metode Kontrol Logistik</strong>: Pertahankan sistem Just-In-Time logistik semen, pasir, dan besi beton yang sudah berjalan prima guna menghindari over-stocking yang rentan rusak di lapangan.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-emerald-500/5 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-100">
+                        <span className="text-emerald-400 font-black text-xs">02</span>
+                        <span><strong>Persiapan Musim Penghujan (Anti-Weather Shelter)</strong>: Pasang atap terpal temporer/shelter di zona pengerjaan fasad luar agar pengerjaan dinding plester dan cat primer tetap dapat berlanjut lancar meskipun intensitas hujan meningkat di sore hari.</span>
+                      </li>
+                      <li className="flex items-start gap-2.5 bg-emerald-500/5 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-100">
+                        <span className="text-emerald-400 font-black text-xs">03</span>
+                        <span><strong>Uji Kekedapan Dini (Waterproofing Test)</strong>: Mulai laksanakan uji rendam waterproofing di toilet, dak atap, dan talang beton sesegera mungkin guna mendeteksi kebocoran seawal mungkin sebelum pemasangan plafon.</span>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+            </div>
+          </motion.div>
+        </div>
       )}
 
       {/* SECTORAL WORKS CATEGORIES TABLE BLOCK (STRUKTUR RINCIAN KERJA WBS) */}

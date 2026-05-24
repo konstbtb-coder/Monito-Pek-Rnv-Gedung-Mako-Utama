@@ -20,7 +20,8 @@ import {
   ChevronDown,
   Sparkles,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Printer
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { MetricCard } from './components/MetricCard';
@@ -48,7 +49,8 @@ export default function App() {
   // Navigation View modes
   const [viewMode, setViewMode] = useState<'all' | 'daily' | 'weekly'>('weekly');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(true);
+  const [isSidebarHovered, setIsSidebarHovered] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [showTopMenu, setShowTopMenu] = useState<boolean>(true);
   const [showSheetDropdown, setShowSheetDropdown] = useState<boolean>(false);
@@ -63,6 +65,40 @@ export default function App() {
   const [includeWeeklySCurve, setIncludeWeeklySCurve] = useState<boolean>(true);
   const [includeDailyTimeline, setIncludeDailyTimeline] = useState<boolean>(true);
   const [includeAIAnalysis, setIncludeAIAnalysis] = useState<boolean>(true);
+
+  // System Date Time state and dynamic update hook
+  const [systemTime, setSystemTime] = useState<Date>(new Date());
+  const [simulateUnder30, setSimulateUnder30] = useState<boolean>(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSystemTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getFormattedSystemTime = () => {
+    const DAYS_INDONESIAN = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const MONTHS_INDONESIAN = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    
+    const dayName = DAYS_INDONESIAN[systemTime.getDay()];
+    const dateNum = systemTime.getDate();
+    const monthName = MONTHS_INDONESIAN[systemTime.getMonth()];
+    const yearNum = systemTime.getFullYear();
+    
+    const hours = String(systemTime.getHours()).padStart(2, '0');
+    const minutes = String(systemTime.getMinutes()).padStart(2, '0');
+    const seconds = String(systemTime.getSeconds()).padStart(2, '0');
+    
+    return {
+      dayName,
+      dateString: `${dateNum} ${monthName} ${yearNum}`,
+      timeString: `${hours}:${minutes}:${seconds}`
+    };
+  };
 
   // Helper: Parse Google Sheets Indonesian date format to modern JavaScript Date object
   const parseTanggalRawToDate = (tanggalRaw: string): Date | null => {
@@ -1339,124 +1375,128 @@ export default function App() {
 
     if (includeDailyTimeline) {
       // SECTION V / VI: JURNAL TIMELINE LAPORAN HARIAN PROYEK
-      checkPageBreak(25);
+      checkPageBreak(18);
       doc.setFont('Helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.setTextColor(15, 23, 42);
       doc.text(sectionTitle, 15, y);
-      y += 5;
+      y += 6;
 
-    chronologicalReports.forEach((report) => {
-      const headerH = 7;
-      const actWords = report.uraianKegiatan || [];
-      const formattedTasks = actWords.length > 0 
-        ? actWords.map(t => `• ${t}`)
-        : ['• Tidak ada kegiatan terlaksana terdata.'];
-      
-      const matText = report.material || '-';
-      
-      const p = report.pekerjaParsed;
-      const workerText = `Manpower: Mandor: ${p.mandor} Org, K-3/Batu/Besi/Lainnya Tukang: ${p.tukangBatu + p.tukangBesi + p.tukangKeramik + p.tukangPlafond} Org, Pekerja: ${p.pekerja} Org (Total: ${p.total} Org)`;
-      const weatherText = `Kondisi Cuaca Lapangan: Pagi: ${report.cuaca.pagi} | Siang: ${report.cuaca.siang} | Sore: ${report.cuaca.sore}`;
+      chronologicalReports.forEach((report) => {
+        const actWords = report.uraianKegiatan || [];
+        const formattedTasks = actWords.length > 0 
+          ? actWords.map(t => `• ${t}`)
+          : ['• Tidak ada kegiatan terlaksana terdata.'];
+        
+        const taskInLines: string[] = [];
+        formattedTasks.forEach(task => {
+          const lines = doc.splitTextToSize(task, 175);
+          taskInLines.push(...lines);
+        });
 
-      // Measure lines count to calculate exact block height
-      let linesCount = 0;
-      const taskInLines: string[] = [];
-      formattedTasks.forEach(task => {
-        const lines = doc.splitTextToSize(task, 172);
-        taskInLines.push(...lines);
+        const matText = report.material || '[Tidak Ada Material Masuk]';
+        const matLines = doc.splitTextToSize(matText, 175);
+
+        const boxHeight = 10.0; // Highly compact padding & content box height
+        // Estimate the exact height of the block with tight vertical margins:
+        // Header bar: 5mm, gap to label A: 4.5mm, label A: 3mm, task lines: count * 3.1,
+        // gap to label B: 2mm, label B: 3mm, mat lines: count * 3.1, gap to label C: 2mm,
+        // label C: 2.5mm, box: boxHeight, gap to next entry: 5.5mm.
+        const estimatedHeight = 5 + 4.5 + 3 + (taskInLines.length * 3.1) + 2 + 3 + (matLines.length * 3.1) + 2 + 2.5 + boxHeight + 5.5;
+
+        checkPageBreak(estimatedHeight);
+
+        // A. Draw Header bar (Orange vertical ribbon on left, Dark Blue header bar)
+        doc.setFillColor(245, 158, 11); // Amber accent
+        doc.rect(15, y, 2.0, 5, 'F');
+
+        doc.setFillColor(15, 23, 42); // slate-900 / dark blue
+        doc.rect(17.0, y, 178.0, 5, 'F');
+
+        // Header text inside bar
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`HARI KE-${report.no}  |  ${report.tanggalParsed.hari.toUpperCase()}, ${report.tanggalParsed.tanggalStr.toUpperCase()}`, 20, y + 3.6);
+
+        // B. Section Content Area
+        let currentY = y + 9.5;
+
+        // 1. Section A: activities
+        doc.setFont('Helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(7.2);
+        doc.text('A. URAIAN KEGIATAN / PEKERJAAN TERLAKSANA', 15, currentY);
+        currentY += 3.5;
+
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(51, 65, 85);
+        taskInLines.forEach((line) => {
+          doc.text(line, 18, currentY);
+          currentY += 3.1;
+        });
+
+        // 2. Section B: logistics
+        currentY += 2.0;
+        doc.setFont('Helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(7.2);
+        doc.text('B. PENGGUNAAN MATERIAL / LOGISTIK', 15, currentY);
+        currentY += 3.5;
+
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(51, 65, 85);
+        matLines.forEach((line) => {
+          doc.text(line, 18, currentY);
+          currentY += 3.1;
+        });
+
+        // 3. Section C: resources & weather box
+        currentY += 2.0;
+        doc.setFont('Helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.setFontSize(7.2);
+        doc.text('C. SUMBER DAYA & KONDISI LAPANGAN', 15, currentY);
+        currentY += 2.5;
+
+        // Outline background card
+        doc.setFillColor(248, 250, 252); // offwhite bg
+        doc.setDrawColor(226, 232, 240); // slate-200 border
+        doc.setLineWidth(0.2);
+        doc.roundedRect(15, currentY, 180, boxHeight, 1.0, 1.0, 'FD');
+
+        // Render Row 1: Mobilisasi Pekerja (aligned at X = 38.0)
+        let boxY1 = currentY + 3.5;
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text("Mobilisasi Pekerja", 18, boxY1);
+
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(71, 85, 105);
+        const p = report.pekerjaParsed;
+        const mpVal = `:  Mandor: ${p.mandor}  |  Tk. Batu: ${p.tukangBatu}  |  Tk. Plafond: ${p.tukangPlafond}  |  Tk. Keramik: ${p.tukangKeramik}  |  Tk. Besi: ${p.tukangBesi}  |  Pekerja: ${p.pekerja}  |  Total: ${p.total} Org`;
+        doc.text(mpVal, 38.0, boxY1);
+
+        // Render Row 2: Kondisi Cuaca (aligned at X = 38.0)
+        let boxY2 = boxY1 + 4.0;
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(6.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text("Kondisi Cuaca", 18, boxY2);
+
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(71, 85, 105);
+        const weatherVal = `:  Pagi: ${report.cuaca.pagi}  |  Siang: ${report.cuaca.siang}  |  Sore: ${report.cuaca.sore}`;
+        doc.text(weatherVal, 38.0, boxY2);
+
+        // Setup coordinate for subsequent day block
+        y = currentY + boxHeight + 5.5;
       });
-      linesCount += taskInLines.length;
-
-      const matLines = doc.splitTextToSize(`Material Masuk / Logistik: ${matText}`, 172);
-      linesCount += matLines.length;
-
-      const workLines = doc.splitTextToSize(workerText, 172);
-      linesCount += workLines.length;
-
-      const weatherLines = doc.splitTextToSize(weatherText, 172);
-      linesCount += weatherLines.length;
-
-      const estimatedHeight = headerH + (linesCount * 3.8) + 12;
-
-      checkPageBreak(estimatedHeight);
-
-      // Draw container card background
-      doc.setFillColor(248, 250, 252); // offwhite bg
-      doc.setDrawColor(226, 232, 240); // slate-200 border
-      doc.setLineWidth(0.25);
-      doc.roundedRect(15, y, 180, estimatedHeight - 3, 2.5, 2.5, 'FD');
-
-      // Left amber indicator accent bar
-      doc.setFillColor(245, 158, 11);
-      doc.roundedRect(15, y, 1.5, estimatedHeight - 3, 2.5, 2.5, 'F');
-      doc.rect(16, y, 0.5, estimatedHeight - 3, 'F');
-
-      // Report Header Label
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(7.8);
-      doc.setTextColor(15, 23, 42);
-      doc.text(`LAPORAN HARI KE-${report.no}  |  ${report.tanggalParsed.hari.toUpperCase()}, ${report.tanggalParsed.tanggalStr.toUpperCase()}`, 19, y + 5);
-
-      let contentY = y + 9.5;
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(6.8);
-      doc.setTextColor(30, 41, 59);
-
-      // 1. Activities
-      doc.setFont('Helvetica', 'bold');
-      doc.setTextColor(71, 85, 105);
-      doc.text('Kegiatan Terlaksana:', 19, contentY);
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(30, 41, 59);
-      
-      let activitiesOffsetY = contentY + 3.5;
-      taskInLines.forEach((line) => {
-        doc.text(line, 22, activitiesOffsetY);
-        activitiesOffsetY += 3.5;
-      });
-
-      // 2. Logistics Material
-      doc.setFont('Helvetica', 'bold');
-      doc.setTextColor(71, 85, 105);
-      doc.text('Sirkulasi Material:', 19, activitiesOffsetY);
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(30, 41, 59);
-
-      let logisticsOffsetY = activitiesOffsetY;
-      matLines.forEach((line, idx) => {
-        doc.text(line, idx === 0 ? 41 : 22, logisticsOffsetY);
-        logisticsOffsetY += 3.5;
-      });
-
-      // 3. Workers Mobilization
-      doc.setFont('Helvetica', 'bold');
-      doc.setTextColor(71, 85, 105);
-      doc.text('Mobilisasi Tenaga:', 19, logisticsOffsetY);
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(30, 41, 59);
-
-      let workersOffsetY = logisticsOffsetY;
-      workLines.forEach((line, idx) => {
-        doc.text(idx === 0 ? line.replace('Manpower: ', '') : line, idx === 0 ? 41 : 22, workersOffsetY);
-        workersOffsetY += 3.5;
-      });
-
-      // 4. Weather info
-      doc.setFont('Helvetica', 'bold');
-      doc.setTextColor(71, 85, 105);
-      doc.text('Parameter Cuaca:', 19, workersOffsetY);
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(30, 41, 59);
-
-      let weatherOffsetY = workersOffsetY;
-      weatherLines.forEach((line, idx) => {
-        doc.text(idx === 0 ? line.replace('Kondisi Cuaca Lapangan: ', '') : line, idx === 0 ? 41 : 22, weatherOffsetY);
-        weatherOffsetY += 3.5;
-      });
-
-      y = weatherOffsetY + 3;
-    });
     }
 
     // Add Signature Block "Ttd / Project Manajer" on the last page with proper boundary checks
@@ -1495,6 +1535,15 @@ export default function App() {
 
     doc.save(`Laporan_Audit_Mako_Lengkap_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
+  
+  const getRemainingDays = () => {
+    if (!weeklyData || !weeklyData.riil || weeklyData.riil.length === 0) return 210;
+    const latestRiilIdx = weeklyData.riil.reduce((acc, val, idx) => (typeof val === 'number' && !isNaN(val) && val > 0 ? idx : acc), 0);
+    const overallLatestActiveWeek = latestRiilIdx + 1;
+    return Math.max(0, 210 - (overallLatestActiveWeek * 7));
+  };
+
+  const remainingDays = simulateUnder30 ? 25 : getRemainingDays();
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex font-sans">
@@ -1506,27 +1555,71 @@ export default function App() {
         />
       )}
 
+      {/* Invisible Hover Trigger Zone on Left Screen Edge when Sidebar is Collapsed and Not Hovered */}
+      {isSidebarCollapsed && !isSidebarHovered && (
+        <div 
+          className="fixed inset-y-0 left-0 w-4 z-40 hidden md:block cursor-pointer group"
+          onMouseEnter={() => setIsSidebarHovered(true)}
+          title="Sorot tepi kiri untuk memunculkan Menu Navigasi"
+        >
+          {/* Subtle Interactive Edge Glow Indicator */}
+          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-r from-indigo-500/20 to-transparent group-hover:w-2 group-hover:from-indigo-500/80 transition-all duration-200 flex items-center justify-center">
+            <div className="w-1 h-8 rounded-full bg-indigo-500 animate-pulse hidden group-hover:block" />
+          </div>
+        </div>
+      )}
+
       {/* Responsive Left Sidebar Panel */}
-      <aside className={`fixed inset-y-0 left-0 bg-[#0B0F19] border-r border-slate-800/80 text-white w-64 lg:w-72 flex flex-col z-50 transition-all duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarCollapsed ? 'md:-translate-x-full' : 'md:translate-x-0'}`}>
+      <aside 
+        onMouseEnter={() => setIsSidebarHovered(true)}
+        onMouseLeave={() => setIsSidebarHovered(false)}
+        className={`fixed inset-y-0 left-0 bg-[#0B0F19] border-r border-slate-800/80 text-white w-64 lg:w-72 flex flex-col z-50 transition-all duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${(isSidebarCollapsed && !isSidebarHovered) ? 'md:-translate-x-full' : 'md:translate-x-0'} ${(isSidebarCollapsed && isSidebarHovered) ? 'shadow-2xl shadow-indigo-950/40 border-r-indigo-500/30' : ''}`}
+      >
         {/* Brand Header */}
-        <div className="p-6 border-b border-slate-800/80 flex items-center justify-between select-none">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 flex-shrink-0">
-              <span className="text-sm font-black animate-pulse">⚡</span>
+        <div className="p-5 border-b border-slate-800/80 flex flex-col gap-4 select-none">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 flex-shrink-0">
+                <span className="text-sm font-black animate-pulse">⚡</span>
+              </div>
+              <div>
+                <h2 className="text-sm font-black tracking-tight text-white font-sans">Portal Genset</h2>
+                <p className="text-[9px] font-bold text-cyan-400 font-mono tracking-widest uppercase mt-0.5">TELEMETRI TERPADU</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-black tracking-tight text-white font-sans">Portal Genset</h2>
-              <p className="text-[9px] font-bold text-cyan-400 font-mono tracking-widest uppercase mt-0.5">TELEMETRI TERPADU</p>
+            {/* Button to collapse/pin inside sidebar on desktop */}
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="p-1.5 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800/60 rounded-xl hidden md:flex cursor-pointer transition-colors animate-fade-in"
+              title={isSidebarCollapsed ? "Kunci/Pin Menu agar tetap terbuka" : "Sembunyikan Menu"}
+            >
+              {isSidebarCollapsed ? (
+                <span className="text-[10px] font-black tracking-wider text-indigo-400 font-sans px-1 uppercase flex items-center gap-1.5 animate-pulse">
+                  📌 Kunci
+                </span>
+              ) : (
+                <ChevronLeft className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+
+          {/* System Dynamic Clock Panel */}
+          <div className="bg-slate-900/60 border border-slate-800/85 rounded-2xl p-3 flex flex-col gap-1 text-left">
+            <div className="flex items-center gap-1.5 text-[9px] font-bold text-indigo-400 font-sans tracking-wide">
+              <span>📅</span> WAKTU SISTEM TERUKUR
+            </div>
+            <div className="text-xs font-black text-white font-sans mt-0.5">
+              {getFormattedSystemTime().dayName}, {getFormattedSystemTime().dateString}
+            </div>
+            <div className="text-base font-extrabold font-mono tracking-widest text-[#22D3EE] mt-1 flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+              </span>
+              <span>{getFormattedSystemTime().timeString}</span>
+              <span className="text-[8px] font-bold text-slate-500 bg-slate-800 px-1 py-0.5 rounded ml-auto">WIB</span>
             </div>
           </div>
-          {/* Button to collapse inside sidebar on desktop */}
-          <button
-            onClick={() => setIsSidebarCollapsed(true)}
-            className="p-1.5 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800/60 rounded-xl hidden md:flex cursor-pointer transition-colors"
-            title="Sembunyikan Menu"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Primary Links */}
@@ -1564,6 +1657,24 @@ export default function App() {
             <Calendar className={`w-4.5 h-4.5 shrink-0 ${viewMode === 'daily' ? 'text-indigo-400' : 'text-slate-400'}`} />
             <span>Laporan Harian</span>
           </button>
+
+          {/* Simulation Tools Panel */}
+          <div className="pt-4 mt-2 border-t border-slate-800/40">
+            <div className="px-3 py-1.5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+              SIMULASI & FITUR
+            </div>
+            <div className="px-3 py-1">
+              <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 hover:text-white cursor-pointer select-none transition-colors">
+                <input
+                  type="checkbox"
+                  checked={simulateUnder30}
+                  onChange={(e) => setSimulateUnder30(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-0 focus:ring-offset-0 cursor-pointer w-3.5 h-3.5"
+                />
+                <span>Uji Peringatan Sisa Hari</span>
+              </label>
+            </div>
+          </div>
         </nav>
 
         {/* User Identity Box Footer */}
@@ -1581,7 +1692,7 @@ export default function App() {
       {/* Main Right Content Grid */}
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 bg-[#F8FAFC] ${isSidebarCollapsed ? 'md:pl-0' : 'md:pl-64 lg:pl-72'}`}>
         {/* Dynamic Header Toolbar */}
-        <header className="border-b border-sky-100/60 bg-white/95 sticky top-0 z-40 backdrop-blur-md shadow-2xs py-4 px-4 sm:px-6 flex-shrink-0">
+        <header className="border-b border-sky-100/60 bg-white/95 sticky top-0 z-40 backdrop-blur-md shadow-2xs py-3.5 px-4 sm:px-6 flex-shrink-0">
           <div className="w-full flex flex-row items-center justify-between gap-4">
             
             {/* Left Header info block */}
@@ -1630,6 +1741,38 @@ export default function App() {
 
             {/* Right Header actions block */}
             <div className="flex items-center gap-2.5 shrink-0">
+              {/* Dynamic Remaining Days critical warning badge */}
+              {remainingDays < 30 && (
+                <div 
+                  className="flex items-center gap-1.5 px-3 py-2 bg-rose-50 border border-rose-200 text-rose-705 rounded-xl text-2xs sm:text-xs font-serif font-black uppercase tracking-wide animate-pulse select-none shadow-xs text-rose-700"
+                  title="Peringatan Batas Waktu Kontrak Pekerjaan Tersisa Kritis (< 30 Hari)!"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                  <span className="font-sans">Sisa {remainingDays} Hari!</span>
+                </div>
+              )}
+
+              {/* Dynamic Header Time Widget */}
+              <div className="hidden lg:flex items-center gap-2 px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl select-none font-sans">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                <span className="text-[10px] font-extrabold text-slate-450 font-mono uppercase tracking-wider shrink-0">Waktu Sistem:</span>
+                <span className="text-[11px] font-black text-slate-800 shrink-0">
+                  {getFormattedSystemTime().dayName}, {getFormattedSystemTime().dateString}
+                </span>
+                <span className="text-[11px] font-bold font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-lg shrink-0 border border-indigo-100/50">
+                  {getFormattedSystemTime().timeString}
+                </span>
+              </div>
+
+              <button
+                onClick={() => window.print()}
+                title="Cetak Tampilan Lapangan Teroptimasi (Ctrl + P)"
+                className="btn-3d-active flex items-center gap-1.5 px-3.5 py-2.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-2xs sm:text-xs font-black cursor-pointer transition-all shadow-xs"
+              >
+                <Printer className="w-3.5 h-3.5 text-indigo-600" />
+                <span className="hidden sm:inline">Versi Cetak</span>
+              </button>
+
               <button
                 onClick={() => setShowExportModal(true)}
                 title="Ekspor Seluruh Parameter Dasbor ke Dokumen PDF A4"
@@ -1704,6 +1847,26 @@ export default function App() {
               </div>
             </div>
 
+          </div>
+
+          {/* Project Details Ribbon */}
+          <div className="w-full mt-3.5 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-2xs md:text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 bg-slate-50/60 hover:bg-slate-50 border border-slate-100/60 p-2.5 rounded-xl transition-all min-w-0">
+              <span className="font-bold text-slate-400 text-[10px] uppercase tracking-wider shrink-0">Pekerjaan:</span>
+              <span className="font-black text-slate-900 truncate" title="Pekerjaani Renovasi Gedung Mako Utama">Pekerjaani Renovasi Gedung Mako Utama</span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 bg-slate-50/60 hover:bg-slate-50 border border-slate-100/60 p-2.5 rounded-xl transition-all min-w-0">
+              <span className="font-bold text-slate-400 text-[10px] uppercase tracking-wider shrink-0">Penyedia:</span>
+              <span className="font-black text-slate-900 truncate" title="PT. Bina Konstruksi Abadi">PT. Bina Konstruksi Abadi</span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 bg-slate-50/60 hover:bg-slate-50 border border-slate-100/60 p-2.5 rounded-xl transition-all min-w-0">
+              <span className="font-bold text-slate-400 text-[10px] uppercase tracking-wider shrink-0">No Perj/Kontrak:</span>
+              <span className="font-black text-slate-950 font-mono text-[10px] sm:text-2xs truncate" title="Sperj/03/V/2026/Koopsudnas tgl. 25 Mei 2026">Sperj/03/V/2026/Koopsudnas tgl. 25 Mei 2026</span>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 bg-indigo-50/30 hover:bg-indigo-50/50 border border-indigo-100/40 p-2.5 rounded-xl transition-all min-w-0">
+              <span className="font-bold text-indigo-500 text-[10px] uppercase tracking-wider shrink-0">Pelaksanaan:</span>
+              <span className="font-black text-indigo-750 truncate" title="210 HK (25 Mei 2026 s/d 21 Desember 2026)">210 HK (25 Mei 2026 s/d 21 Desember 2026)</span>
+            </div>
           </div>
         </header>
 
