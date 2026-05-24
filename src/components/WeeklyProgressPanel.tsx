@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { 
   TrendingUp, 
+  TrendingDown,
   Layers, 
   Calendar, 
   ArrowUpRight, 
@@ -170,6 +171,48 @@ export function WeeklyProgressPanel() {
       cat.name.toLowerCase().includes(q)
     );
   }, [uniqueCategories, searchQuery]);
+
+  // Performance summary for managerial decision-making (A-K Progress)
+  const performanceSummary = useMemo(() => {
+    if (!data || !uniqueCategories.length) return null;
+
+    const sorted = uniqueCategories.map(cat => {
+      const progressVal = cat.progress[selectedWeekIdx] || 0;
+      const contribution = (progressVal * cat.weight) / 100;
+      return {
+        ...cat,
+        progressVal,
+        contribution
+      };
+    });
+
+    const highest = [...sorted]
+      .sort((a, b) => {
+        if (b.progressVal !== a.progressVal) {
+          return b.progressVal - a.progressVal;
+        }
+        return b.weight - a.weight;
+      })
+      .slice(0, 3);
+
+    const lowest = [...sorted]
+      .sort((a, b) => {
+        if (a.progressVal !== b.progressVal) {
+          return a.progressVal - b.progressVal;
+        }
+        return a.weight - b.weight;
+      })
+      .slice(0, 3);
+
+    // Identify high-weight risk sectors (weight > 10% but progress is still low < 30%)
+    const highWeightRiskSectors = lowest.filter(cat => cat.weight > 10 && cat.progressVal < 30);
+
+    return {
+      highest,
+      lowest,
+      highWeightRiskSectors
+    };
+  }, [data, uniqueCategories, selectedWeekIdx]);
 
   if (loading) {
     return (
@@ -408,6 +451,202 @@ export function WeeklyProgressPanel() {
         </motion.div>
 
       </div>
+
+      {/* COMPONENT RINGKASAN PERFORMA SEKTOR (3 TINGGI vs 3 TERENDAH) */}
+      {performanceSummary && (
+        <motion.div
+          className="bg-white border border-sky-100 rounded-3xl p-6 shadow-md shadow-slate-100/50 flex flex-col gap-6"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          id="managerial-performance-summary"
+        >
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-50 pb-4">
+            <div>
+              <span className="text-[9px] uppercase font-black tracking-widest bg-amber-500/10 text-amber-700 border border-amber-500/20 px-2.5 py-1 rounded-lg font-mono">
+                MATRIKS AKSelerasi keputusan
+              </span>
+              <h4 className="text-base font-black text-slate-900 font-sans tracking-tight mt-1.5 flex items-center gap-2">
+                <span>⚡</span> Pemetaan Performa Sektor Konstruksi (A-K)
+              </h4>
+              <p className="text-xs text-slate-500 font-sans mt-0.5">
+                Mengidentifikasi 3 bidang pekerjaan kemajuan tertinggi dan 3 bidang kemajuan terendah pada pekan terfokus
+              </p>
+            </div>
+            
+            <div className="text-xs text-slate-550 font-sans font-bold flex items-center gap-2 bg-slate-50 px-3.5 py-2 border border-slate-200/50 rounded-xl self-start sm:self-auto select-none">
+              <span className="w-2 h-2 rounded-full bg-indigo-650 animate-pulse"></span>
+              Pekan Tinjauan: <span className="text-indigo-950 font-extrabold underline">Minggu Ke-{(selectedWeekIdx+1)}</span>
+            </div>
+          </div>
+
+          {/* Core Content Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Left Column: TOP 3 HIGHEST PROGRESS SECTORS */}
+            <div className="bg-[#FAFDFB]/80 border border-emerald-100/70 rounded-2xl p-5 shadow-2xs flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-emerald-100/40 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-emerald-50 text-emerald-700 rounded-xl flex items-center justify-center font-black border border-emerald-100">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-black text-emerald-950 font-sans uppercase tracking-wide">3 Sektor Progres Tertinggi</h5>
+                    <p className="text-[10px] text-emerald-700 font-medium font-sans mt-0.5">Aspek pekerjaan dengan realisasi fisik terdepan</p>
+                  </div>
+                </div>
+                <span className="text-[9px] bg-emerald-50 text-emerald-805 border border-emerald-100/60 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                  OPTIMAL
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                {performanceSummary.highest.map((sector) => {
+                  return (
+                    <div key={sector.code} className="group flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-5.5 h-5.5 bg-emerald-500 text-white font-black font-mono text-2xs rounded-lg flex items-center justify-center opacity-90 shrink-0 group-hover:scale-105 transition-transform border border-emerald-600">
+                            {sector.code}
+                          </span>
+                          <span className="font-extrabold text-slate-800 truncate" title={sector.name}>
+                            {sector.name}
+                          </span>
+                        </div>
+                        <div className="text-right flex items-center gap-2 shrink-0">
+                          <span className="text-[9px] text-slate-400 font-bold">Bobot: {sector.weight.toFixed(2)}%</span>
+                          <span className="font-black text-emerald-750 font-mono bg-emerald-100/40 px-2 py-0.5 rounded-lg border border-emerald-200/50">
+                            {sector.progressVal.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Progress slider bar */}
+                      <div className="space-y-1">
+                        <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200/40">
+                          <div 
+                            className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${sector.progressVal}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] text-slate-450 px-1 font-semibold">
+                          <span>Realisasi rill sektor</span>
+                          <span className="font-mono text-slate-550">
+                            Kontribusi: <strong className="text-emerald-800 font-bold">{sector.contribution.toFixed(3)}%</strong>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Column: BOTTOM 3 LOWEST PROGRESS SECTORS */}
+            <div className="bg-[#FFFBFB]/80 border border-rose-100/70 rounded-2xl p-5 shadow-2xs flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-rose-100/40 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-rose-50 text-rose-700 rounded-xl flex items-center justify-center font-black border border-rose-100">
+                    <TrendingDown className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-black text-rose-950 font-sans uppercase tracking-wide">3 Sektor Progres Terendah</h5>
+                    <p className="text-[10px] text-rose-700 font-medium font-sans mt-0.5">Aspek pekerjaan tertahan atau belum dimulai</p>
+                  </div>
+                </div>
+                <span className="text-[9px] bg-rose-50 text-rose-805 border border-rose-100/60 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">
+                  PERLU ATENSI
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                {performanceSummary.lowest.map((sector) => {
+                  return (
+                    <div key={sector.code} className="group flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-5.5 h-5.5 bg-rose-500 text-white font-black font-mono text-2xs rounded-lg flex items-center justify-center opacity-90 shrink-0 group-hover:scale-105 transition-transform border border-rose-600">
+                            {sector.code}
+                          </span>
+                          <span className="font-extrabold text-slate-800 truncate" title={sector.name}>
+                            {sector.name}
+                          </span>
+                        </div>
+                        <div className="text-right flex items-center gap-2 shrink-0">
+                          <span className="text-[9px] text-slate-400 font-bold">Bobot: {sector.weight.toFixed(2)}%</span>
+                          <span className={`font-black font-mono px-2 py-0.5 rounded-lg border ${
+                            sector.progressVal > 0 
+                              ? 'text-amber-705 bg-amber-50 border-amber-200/50' 
+                              : 'text-rose-600 bg-rose-50 border-rose-200/50'
+                          }`}>
+                            {sector.progressVal > 0 ? `${sector.progressVal.toFixed(2)}%` : '0.00%'}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Progress slider bar */}
+                      <div className="space-y-1">
+                        <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden border border-slate-200/40">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              sector.progressVal > 0 ? 'bg-amber-400' : 'bg-rose-300'
+                            }`}
+                            style={{ width: `${Math.max(3, sector.progressVal)}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] text-slate-450 px-1 font-semibold">
+                          <span>Realisasi rill sektor</span>
+                          <span className="font-mono text-slate-550">
+                            Kontribusi: <strong className="text-rose-800 font-bold">{sector.contribution.toFixed(3)}%</strong>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Dynamic Manager Alert Banner */}
+          {performanceSummary.highWeightRiskSectors.length > 0 ? (
+            <div className="bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200/60 rounded-2xl p-4.5 flex flex-col sm:flex-row items-start gap-3.5 text-xs leading-relaxed text-slate-700 animate-fade-in shadow-2xs">
+              <div className="p-2 bg-rose-100 text-rose-700 rounded-xl shrink-0 mt-0.5 font-bold border border-rose-200/40">
+                <AlertTriangle className="w-4.5 h-4.5 animate-bounce" />
+              </div>
+              <div className="space-y-1.5">
+                <span className="text-rose-950 font-black tracking-wider uppercase text-[9.5px] block font-mono">
+                  ⚠️ PERINGATAN RISIKO KRITIS: ELEMEN BOBOT TINGGI TERTUNDA!
+                </span>
+                <p className="font-medium font-sans">
+                  Sektor berikut di bawah ini memiliki <strong className="text-rose-900 font-extrabold bg-rose-100/65 px-1 py-0.5 rounded border border-rose-200/30">bobot kontrak tinggi (&gt;10%)</strong> namun progresnya tercatat masih sangat <strong className="text-rose-900 font-bold">rendah (&lt;30%)</strong> di Minggu Ke-{(selectedWeekIdx+1)}:
+                </p>
+                <div className="flex flex-wrap gap-2.5 mt-2">
+                  {performanceSummary.highWeightRiskSectors.map(sec => (
+                    <span key={sec.code} className="bg-white border border-rose-200 text-slate-800 px-3 py-1.5 rounded-xl text-2xs font-extrabold flex items-center gap-2 shadow-3xs">
+                      <span className="w-4 h-4 rounded bg-rose-600 text-white font-mono flex items-center justify-center font-black text-[9px]">{sec.code}</span>
+                      <span className="text-slate-700 truncate max-w-[120px]">{sec.name}</span>
+                      <span className="text-rose-600 font-mono font-black bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200/20">{sec.progressVal.toFixed(2)}%</span>
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-500 mt-2 font-sans leading-relaxed">
+                  <strong>Rekomendasi Manufaktur & Logistik:</strong> Sektor di atas memerlukan perhatian dan mobilisasi instan sumber daya tukang serta material. Segera pimpin intervensi langsung untuk mengurai sumbatan lapangan sebelum keterlambatan melampaui ambang batas deviasi aman.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-slate-50/60 border border-slate-100 p-4 rounded-2xl flex items-start sm:items-center gap-3 text-xs text-slate-655 leading-relaxed font-sans">
+              <Info className="w-4.5 h-4.5 text-indigo-500 shrink-0 mt-0.5 sm:mt-0" />
+              <p className="font-medium">
+                <strong>Rasio Kinerja Stabil:</strong> Tidak terdeteksi sektor dengan bobot kritis (&gt;10% total kontrak) yang mengalami keterlambatan ekstrim di bawah target plans pada pekan ini. Pembobotan proyek terdistribusi aman pada jalurnya.
+              </p>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* DETAILED CARDS & CHART */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

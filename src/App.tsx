@@ -65,6 +65,7 @@ export default function App() {
   const [includeWeeklySCurve, setIncludeWeeklySCurve] = useState<boolean>(true);
   const [includeDailyTimeline, setIncludeDailyTimeline] = useState<boolean>(true);
   const [includeAIAnalysis, setIncludeAIAnalysis] = useState<boolean>(true);
+  const [pdfType, setPdfType] = useState<'comprehensive' | 'sector_only'>('comprehensive');
 
   // System Date Time state and dynamic update hook
   const [systemTime, setSystemTime] = useState<Date>(new Date());
@@ -431,7 +432,8 @@ export default function App() {
     startDay: number = 1, 
     endDay: number = 37,
     startDateStr: string = '',
-    endDateStr: string = ''
+    endDateStr: string = '',
+    exportMode: 'comprehensive' | 'sector_only' = 'comprehensive'
   ) => {
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -555,12 +557,20 @@ export default function App() {
     doc.setTextColor(255, 255, 255);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(10.5);
-    doc.text('LAPORAN MASTER AUDIT & INTEGRASI S-CURVE PROYEK', 41, y + 10);
+    if (exportMode === 'sector_only') {
+      doc.text('LAPORAN REKAPITULASI PROGRES SEKTORAL PEKERJAAN', 41, y + 10);
+    } else {
+      doc.text('LAPORAN MASTER AUDIT & INTEGRASI S-CURVE PROYEK', 41, y + 10);
+    }
     
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(148, 163, 184); // slate-400
-    doc.text('DOKUMEN INTEGRAL NILAI ANALISIS MINGGUAN DAN JURNAL HARIAN LENGKAP', 41, y + 15);
+    if (exportMode === 'sector_only') {
+      doc.text('DETAIL KEMAJUAN DAN DISTRIBUSI BOBOT FISIK SEKTOR BIDANG (KATEGORI A S/D K)', 41, y + 15);
+    } else {
+      doc.text('DOKUMEN INTEGRAL NILAI ANALISIS MINGGUAN DAN JURNAL HARIAN LENGKAP', 41, y + 15);
+    }
     doc.text(`Sumber: Sinkronisasi Google Sheets Seluruh Hari Kerja  |  Waktu Cetak: ${new Date().toLocaleString('id-ID')}  |  User: konstbtb@gmail.com`, 41, y + 20);
 
     y += 28;
@@ -633,168 +643,171 @@ export default function App() {
 
     const cardHeight = 36;
     
-    // --- CARD 1: KESEHATAN PROYEK ---
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(226, 232, 240); // slate-200
-    doc.setLineWidth(0.35);
-    doc.roundedRect(15, y, 58, cardHeight, 3.5, 3.5, 'FD');
-    
-    // Left decorative bar
-    doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
-    doc.roundedRect(15, y, 1.5, cardHeight, 3.5, 3.5, 'F');
-    doc.rect(16, y, 0.5, cardHeight, 'F');
+    if (exportMode === 'comprehensive') {
+      // --- CARD 1: KESEHATAN PROYEK ---
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.setLineWidth(0.35);
+      doc.roundedRect(15, y, 58, cardHeight, 3.5, 3.5, 'FD');
+      
+      // Left decorative bar
+      doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
+      doc.roundedRect(15, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+      doc.rect(16, y, 0.5, cardHeight, 'F');
 
-    // Title Tag
-    doc.setFillColor(248, 250, 252); // slate-50
-    doc.roundedRect(19, y + 3.5, 26, 4, 1, 1, 'F');
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.5);
-    doc.setTextColor(71, 85, 105); // slate-600
-    doc.text('KESEHATAN PROYEK', 20.5, y + 6.3);
+      // Title Tag
+      doc.setFillColor(248, 250, 252); // slate-50
+      doc.roundedRect(19, y + 3.5, 26, 4, 1, 1, 'F');
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.5);
+      doc.setTextColor(71, 85, 105); // slate-600
+      doc.text('KESEHATAN PROYEK', 20.5, y + 6.3);
 
-    // Indicator Dot green/red
-    doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
-    doc.ellipse(15 + 58 - 5, y + 5.5, 1.0, 1.0, 'F');
+      // Indicator Dot green/red
+      doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
+      doc.ellipse(15 + 58 - 5, y + 5.5, 1.0, 1.0, 'F');
 
-    // Kondisi Kumulatif
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.5);
-    doc.setTextColor(148, 163, 184); // slate-400
-    doc.text('KONDISI KUMULATIF', 19, y + 12);
+      // Kondisi Kumulatif
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.5);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.text('KONDISI KUMULATIF', 19, y + 12);
 
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.text(healthStatusStr, 19, y + 18.5);
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.text(healthStatusStr, 19, y + 18.5);
 
-    // Description text wrapped nicely
-    doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(5.5);
-    doc.setTextColor(71, 85, 105); // slate-600
-    const healthLines = doc.splitTextToSize(healthDesc, 51);
-    healthLines.forEach((line: string, idx: number) => {
-      doc.text(line, 19, y + 23.5 + (idx * 2.5));
-    });
+      // Description text wrapped nicely
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor(71, 85, 105); // slate-600
+      const healthLines = doc.splitTextToSize(healthDesc, 51);
+      healthLines.forEach((line: string, idx: number) => {
+        doc.text(line, 19, y + 23.5 + (idx * 2.5));
+      });
 
-    // Measurement week footer
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.2);
-    doc.setTextColor(100, 116, 139); // slate-500
-    doc.text(`Minggu Pengukuran: ${weekLabel}`, 19, y + 32.5);
-
-
-    // --- CARD 2: PENYIMPANGAN S-CURVE ---
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(226, 232, 240); // slate-200
-    doc.setLineWidth(0.35);
-    doc.roundedRect(76, y, 58, cardHeight, 3.5, 3.5, 'FD');
-
-    // Left decorative bar (emerald or red depending on deviation)
-    const deviationColorRGB = latestDeviation >= 0 ? [16, 185, 129] : [239, 68, 68];
-    doc.setFillColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
-    doc.roundedRect(76, y, 1.5, cardHeight, 3.5, 3.5, 'F');
-    doc.rect(77, y, 0.5, cardHeight, 'F');
-
-    // Title Tag
-    doc.setFillColor(248, 250, 252); // slate-50
-    doc.roundedRect(80, y + 3.5, 31, 4, 1, 1, 'F');
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.5);
-    doc.setTextColor(71, 85, 105); // slate-600
-    doc.text('PENYIMPANGAN S-CURVE', 81.5, y + 6.3);
-
-    // Deviation Title & value
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.5);
-    doc.setTextColor(148, 163, 184); // slate-400
-    doc.text('DEVIASI TERBARU TERHITUNG', 80, y + 12);
-
-    const devSign = latestDeviation >= 0 ? '+' : '';
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
-    doc.text(`${devSign}${latestDeviation.toFixed(3)}%`, 80, y + 18.5);
-
-    // Description text wrapped nicely
-    doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(5.5);
-    doc.setTextColor(71, 85, 105); // slate-600
-    const devDesc = `Deviasi dihitung dari selisih antara realisasi aktual ${latestActual.toFixed(2)}% terhadap rancangan rencana ${latestPlan.toFixed(2)}%.`;
-    const devLines = doc.splitTextToSize(devDesc, 51);
-    devLines.forEach((line: string, idx: number) => {
-      doc.text(line, 80, y + 23.5 + (idx * 2.5));
-    });
-
-    // Deviation Status footer
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.2);
-    doc.setTextColor(100, 116, 139); // slate-500
-    doc.text('Status Deviasi: ', 80, y + 32.5);
-    doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
-    doc.text(latestDeviation >= 0 ? 'SURPLUS VOL' : 'KETERLAMBATAN', 93, y + 32.5);
+      // Measurement week footer
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.2);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text(`Minggu Pengukuran: ${weekLabel}`, 19, y + 32.5);
 
 
-    // --- CARD 3: SISA RENCANA PROYEK ---
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(226, 232, 240); // slate-200
-    doc.setLineWidth(0.35);
-    doc.roundedRect(137, y, 58, cardHeight, 3.5, 3.5, 'FD');
+      // --- CARD 2: PENYIMPANGAN S-CURVE ---
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.setLineWidth(0.35);
+      doc.roundedRect(76, y, 58, cardHeight, 3.5, 3.5, 'FD');
 
-    // Left decorative bar (Amber)
-    doc.setFillColor(245, 158, 11);
-    doc.roundedRect(137, y, 1.5, cardHeight, 3.5, 3.5, 'F');
-    doc.rect(138, y, 0.5, cardHeight, 'F');
+      // Left decorative bar (emerald or red depending on deviation)
+      const deviationColorRGB = latestDeviation >= 0 ? [16, 185, 129] : [239, 68, 68];
+      doc.setFillColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
+      doc.roundedRect(76, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+      doc.rect(77, y, 0.5, cardHeight, 'F');
 
-    // Title Tag
-    doc.setFillColor(248, 250, 252); // slate-50
-    doc.roundedRect(141, y + 3.5, 31, 4, 1, 1, 'F');
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.5);
-    doc.setTextColor(71, 85, 105); // slate-600
-    doc.text('SISA RENCANA PROYEK', 142.5, y + 6.3);
+      // Title Tag
+      doc.setFillColor(248, 250, 252); // slate-50
+      doc.roundedRect(80, y + 3.5, 31, 4, 1, 1, 'F');
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.5);
+      doc.setTextColor(71, 85, 105); // slate-600
+      doc.text('PENYIMPANGAN S-CURVE', 81.5, y + 6.3);
 
-    // Remaining Title & value
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.5);
-    doc.setTextColor(148, 163, 184); // slate-400
-    doc.text('PEKERJAAN TERSISA', 141, y + 12);
+      // Deviation Title & value
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.5);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.text('DEVIASI TERBARU TERHITUNG', 80, y + 12);
 
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.text(`${(100 - latestActual).toFixed(2)}%`, 141, y + 18.5);
+      const devSign = latestDeviation >= 0 ? '+' : '';
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
+      doc.text(`${devSign}${latestDeviation.toFixed(3)}%`, 80, y + 18.5);
 
-    // progress bar bar label
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.2);
-    doc.setTextColor(148, 163, 184); // slate-400
-    doc.text('Rasio Realisasi Selesai', 141, y + 23);
-    
-    doc.setFont('Helvetica', 'bold');
-    doc.setTextColor(16, 185, 129); // emerald
-    doc.text(`${latestActual.toFixed(2)}% / 100%`, 190, y + 23, { align: 'right' });
+      // Description text wrapped nicely
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor(71, 85, 105); // slate-600
+      const devDesc = `Deviasi dihitung dari selisih antara realisasi aktual ${latestActual.toFixed(2)}% terhadap rancangan rencana ${latestPlan.toFixed(2)}%.`;
+      const devLines = doc.splitTextToSize(devDesc, 51);
+      devLines.forEach((line: string, idx: number) => {
+        doc.text(line, 80, y + 23.5 + (idx * 2.5));
+      });
 
-    // progress bar track (grey)
-    doc.setFillColor(241, 245, 249); // slate-100
-    doc.roundedRect(141, y + 24.8, 49, 1.8, 0.9, 0.9, 'F');
+      // Deviation Status footer
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.2);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text('Status Deviasi: ', 80, y + 32.5);
+      doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
+      doc.text(latestDeviation >= 0 ? 'SURPLUS VOL' : 'KETERLAMBATAN', 93, y + 32.5);
 
-    // progress bar fill (green)
-    const fillWidth = Math.max(1, Math.min(49, (latestActual / 100) * 49));
-    doc.setFillColor(16, 185, 129); // emerald-500
-    doc.roundedRect(141, y + 24.8, fillWidth, 1.8, 0.9, 0.9, 'F');
 
-    // Contract completion footer
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(5.2);
-    doc.setTextColor(100, 116, 139); // slate-500
-    doc.text('Total Target Kontrak: ', 141, y + 32.5);
-    doc.setTextColor(71, 85, 105);
-    doc.text('100.00% Selesai', 160, y + 32.5);
+      // --- CARD 3: SISA RENCANA PROYEK ---
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.setLineWidth(0.35);
+      doc.roundedRect(137, y, 58, cardHeight, 3.5, 3.5, 'FD');
 
-    y += cardHeight + 6;
+      // Left decorative bar (Amber)
+      doc.setFillColor(245, 158, 11);
+      doc.roundedRect(137, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+      doc.rect(138, y, 0.5, cardHeight, 'F');
+
+      // Title Tag
+      doc.setFillColor(248, 250, 252); // slate-50
+      doc.roundedRect(141, y + 3.5, 31, 4, 1, 1, 'F');
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.5);
+      doc.setTextColor(71, 85, 105); // slate-600
+      doc.text('SISA RENCANA PROYEK', 142.5, y + 6.3);
+
+      // Remaining Title & value
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.5);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.text('PEKERJAAN TERSISA', 141, y + 12);
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.text(`${(100 - latestActual).toFixed(2)}%`, 141, y + 18.5);
+
+      // progress bar bar label
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.2);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.text('Rasio Realisasi Selesai', 141, y + 23);
+      
+      doc.setFont('Helvetica', 'bold');
+      doc.setTextColor(16, 185, 129); // emerald
+      doc.text(`${latestActual.toFixed(2)}% / 100%`, 190, y + 23, { align: 'right' });
+
+      // progress bar track (grey)
+      doc.setFillColor(241, 245, 249); // slate-100
+      doc.roundedRect(141, y + 24.8, 49, 1.8, 0.9, 0.9, 'F');
+
+      // progress bar fill (green)
+      const fillWidth = Math.max(1, Math.min(49, (latestActual / 100) * 49));
+      doc.setFillColor(16, 185, 129); // emerald-500
+      doc.roundedRect(141, y + 24.8, fillWidth, 1.8, 0.9, 0.9, 'F');
+
+      // Contract completion footer
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(5.2);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text('Total Target Kontrak: ', 141, y + 32.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text('100.00% Selesai', 160, y + 32.5);
+
+      y += cardHeight + 6;
+    }
 
     if (includeWeeklySCurve) {
-      // SECTION I: VISUALISASI GRAFIK PENYELARASAN PROGRES (S-CURVE CHART)
+      if (exportMode === 'comprehensive') {
+        // SECTION I: VISUALISASI GRAFIK PENYELARASAN PROGRES (S-CURVE CHART)
       doc.setFont('Helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.setTextColor(15, 23, 42);
@@ -1095,13 +1108,17 @@ export default function App() {
       }
 
       y += 8;
+      } // Closing if (exportMode === 'comprehensive') for Section I & II
 
       // SECTION III: KATEGORI PROGRESS BREAKDOWN (A-K)
       checkPageBreak(25);
       doc.setFont('Helvetica', 'bold');
       doc.setFontSize(8.5);
       doc.setTextColor(15, 23, 42);
-      doc.text('III. ANALISA PROGRES FISIK SUB-BIDANG PEKERJAAN (KATEGORI A s/d K)', 15, y);
+      const sect3Title = exportMode === 'sector_only' 
+        ? 'I. ANALISA PROGRES FISIK SUB-BIDANG PEKERJAAN (KATEGORI A s/d K)' 
+        : 'III. ANALISA PROGRES FISIK SUB-BIDANG PEKERJAAN (KATEGORI A s/d K)';
+      doc.text(sect3Title, 15, y);
       y += 4.5;
 
       // Column Headers: Kode | Nama Kategori Pekerjaan | Bobot (%) | Progres (%) | Kontribusi (%)
@@ -1191,13 +1208,190 @@ export default function App() {
 
       y += 8;
 
-      // IV. EVALUASI DAN STUDI ANALISIS MINGGUAN AI GEMINI (Printed if includeAIAnalysis and analysis state exists)
-      if (includeAIAnalysis && analysis) {
+      // SECTION IV: REKAPITULASI PERKEMBANGAN PROGRES PEKERJAAN MINGGUAN (Kategori A s/d K)
+      const numWeeks = (weeklyData && weeklyData.headers) ? weeklyData.headers.length : 1;
+      // We reserve X=15 to X=89 (74mm) for category details, and X=89 to X=195 (106mm) for week columns
+      const xStartWeeks = 89;
+      const wCol = numWeeks > 0 ? (106 / numWeeks) : 106;
+
+      checkPageBreak(15);
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8.2);
+      doc.setTextColor(15, 23, 42);
+      const sect4Title = exportMode === 'sector_only'
+        ? 'II. REKAPITULASI PERKEMBANGAN PROGRES PEKERJAAN MINGGUAN (MINGGU 1 s/d MINGGU TERAKHIR)'
+        : 'IV. REKAPITULASI PERKEMBANGAN PROGRES PEKERJAAN MINGGUAN (MINGGU 1 s/d MINGGU TERAKHIR)';
+      doc.text(sect4Title, 15, y);
+      y += 4.0;
+
+      // Table Top Accent Border
+      doc.setDrawColor(15, 23, 42); // slate-900 / dark blue
+      doc.setLineWidth(0.35);
+      doc.line(15, y, 195, y);
+
+      // Column Headers Row background
+      doc.setFillColor(241, 245, 249);
+      doc.roundedRect(15, y, 180, 4.8, 1.0, 1.0, 'F');
+      
+      // Determine header font size dynamically based on week density
+      let headerTextSize = 5.8;
+      if (numWeeks > 24) headerTextSize = 4.2;
+      else if (numWeeks > 16) headerTextSize = 4.8;
+      else if (numWeeks > 10) headerTextSize = 5.3;
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(headerTextSize);
+      doc.setTextColor(71, 85, 105);
+
+      doc.text('Kode', 17.5, y + 3.3);
+      doc.text('Kategori Bidang Pekerjaan (A-K)', 23, y + 3.3);
+      doc.text('Bobot (%)', 83, y + 3.3, { align: 'center' });
+
+      // Visual structural vertical dividing line inside header
+      doc.setDrawColor(203, 213, 225); // slate-300
+      doc.setLineWidth(0.18);
+      doc.line(xStartWeeks, y, xStartWeeks, y + 4.8);
+
+      // Draw week columns headers dynamically
+      if (weeklyData && weeklyData.headers) {
+        for (let i = 0; i < numWeeks; i++) {
+          const xPos = xStartWeeks + (i * wCol);
+          let label = `${i + 1}`;
+          if (numWeeks <= 12) {
+            label = `Mgg ${i + 1}`;
+          } else if (numWeeks <= 20) {
+            label = `M-${i + 1}`;
+          }
+          doc.text(label, xPos + (wCol / 2), y + 3.3, { align: 'center' });
+        }
+      }
+      y += 4.8 + 1.0;
+
+      if (weeklyData && weeklyData.categories && weeklyData.categories.length > 0) {
+        // Find unique categories
+        const seenCodes = new Set<string>();
+        const uniqueCats: WeeklyProgressCategory[] = [];
+        weeklyData.categories.forEach(cat => {
+          if (!seenCodes.has(cat.code)) {
+            seenCodes.add(cat.code);
+            uniqueCats.push(cat);
+          }
+        });
+
+        uniqueCats.forEach((cat, idx) => {
+          const catNameLines = doc.splitTextToSize(cat.name, 58); // Optimized size from 56 to 58 to reduce multi-line wrapping
+          const rowHeight = Math.max(4.0, (catNameLines.length * 2.1) + 1.2);
+          checkPageBreak(rowHeight);
+
+          // Alternating background
+          if (idx % 2 === 0) {
+            doc.setFillColor(255, 255, 255);
+          } else {
+            doc.setFillColor(248, 250, 252);
+          }
+          doc.rect(15, y, 180, rowHeight, 'F');
+
+          // Render bottom line border for this row
+          doc.setDrawColor(241, 245, 249);
+          doc.setLineWidth(0.12);
+          doc.line(15, y + rowHeight, 195, y + rowHeight);
+
+          // Render vertical divider column separator
+          doc.setDrawColor(226, 232, 240); // slate-200
+          doc.setLineWidth(0.18);
+          doc.line(xStartWeeks, y, xStartWeeks, y + rowHeight);
+
+          // Render Kode A-K
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(5.5);
+          doc.setTextColor(15, 23, 42);
+          doc.text(cat.code, 17.5, y + (rowHeight / 2) + 0.8);
+
+          // Render Kategori Name
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(5.0);
+          doc.setTextColor(30, 41, 59);
+          catNameLines.forEach((line: string, lineIdx: number) => {
+            doc.text(line, 23, y + 2.2 + (lineIdx * 2.0));
+          });
+
+          // Render Bobot (%)
+          const weight = cat.weight || 0;
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(5.0);
+          doc.text(`${weight.toFixed(2)}%`, 83, y + (rowHeight / 2) + 0.8, { align: 'center' });
+
+          // Render each week's progress value dynamically scaling the font size
+          let valueFontSize = 4.8;
+          if (numWeeks > 24) {
+            valueFontSize = 3.6;
+          } else if (numWeeks > 16) {
+            valueFontSize = 4.0;
+          } else if (numWeeks > 10) {
+            valueFontSize = 4.5;
+          }
+          doc.setFontSize(valueFontSize);
+
+          for (let i = 0; i < numWeeks; i++) {
+            const progressVal = cat.progress[i];
+            const xPos = xStartWeeks + (i * wCol);
+            
+            let valStr = '-';
+            if (progressVal !== undefined && progressVal !== null) {
+              if (progressVal >= 100) {
+                valStr = numWeeks <= 15 ? '100%' : '100';
+              } else if (progressVal > 0) {
+                if (numWeeks <= 12) {
+                  valStr = `${progressVal.toFixed(1)}%`;
+                } else if (numWeeks <= 20) {
+                  valStr = `${progressVal.toFixed(0)}%`;
+                } else {
+                  valStr = `${progressVal.toFixed(0)}`;
+                }
+              }
+            }
+
+            // Bold styling and beautiful colors for progressive values
+            if (valStr !== '-') {
+              if (progressVal >= 100) {
+                doc.setFont('Helvetica', 'bold');
+                doc.setTextColor(16, 185, 129); // emerald-600 green for 100% completed
+              } else {
+                doc.setFont('Helvetica', 'bold');
+                doc.setTextColor(15, 23, 42);
+              }
+            } else {
+              doc.setFont('Helvetica', 'normal');
+              doc.setTextColor(148, 163, 184); // light slate for non-active values
+            }
+
+            doc.text(valStr, xPos + (wCol / 2), y + (rowHeight / 2) + 0.9, { align: 'center' });
+          }
+
+          y += rowHeight;
+        });
+      } else {
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text('Tidak ada rincian data kategori pekerjaan untuk rekapitulasi.', 18, y + 4.5);
+        y += 8;
+      }
+
+      // Draw bottom thick project border at the end of the table
+      doc.setDrawColor(15, 23, 42);
+      doc.setLineWidth(0.4);
+      doc.line(15, y, 195, y);
+
+      y += 8;
+
+      // V. EVALUASI DAN STUDI ANALISIS MINGGUAN AI GEMINI (Printed if includeAIAnalysis and analysis state exists)
+      if (includeAIAnalysis && analysis && exportMode === 'comprehensive') {
         checkPageBreak(42);
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(8.5);
         doc.setTextColor(15, 23, 42); // slate-900
-        doc.text('IV. EVALUASI DAN STUDI ANALISIS MINGGUAN AI GEMINI', 15, y);
+        doc.text('V. EVALUASI DAN STUDI ANALISIS MINGGUAN AI GEMINI', 15, y);
         y += 4.5;
 
         // Splitting analysis strings for nice text wrapping
@@ -1249,15 +1443,16 @@ export default function App() {
     // Compute dynamic indices for Jurnal Harian sections
     let sectionIdxForTimeline = 1;
     if (includeWeeklySCurve) {
-      sectionIdxForTimeline = 4; // normally S-Curve takes I, II, III
+      sectionIdxForTimeline = 5; // normally S-Curve takes I, II, III, IV
       if (includeAIAnalysis && analysis) {
-        sectionIdxForTimeline = 5; // AI Weekly is printed at IV, moving next to V
+        sectionIdxForTimeline = 6; // AI Weekly is printed at V, moving next to VI
       }
     }
 
     // Print Daily AI Analysis (Cuaca, Kendala & Recommendations) if checked & populated
-    if (includeDailyTimeline && includeAIAnalysis && analysis) {
-      const dailyAiPfx = sectionIdxForTimeline === 5 ? 'V' : 'I';
+    if (includeDailyTimeline && includeAIAnalysis && analysis && exportMode === 'comprehensive') {
+      const romanNumerals = ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+      const dailyAiPfx = romanNumerals[sectionIdxForTimeline] || 'VI';
       checkPageBreak(42);
       
       doc.setFont('Helvetica', 'bold');
@@ -1373,7 +1568,7 @@ export default function App() {
       sectionTitle = `${pfx}. JURNAL TIMELINE LAPORAN HARIAN (${startDisplay} S/D ${endDisplay})`;
     }
 
-    if (includeDailyTimeline) {
+    if (includeDailyTimeline && exportMode === 'comprehensive') {
       // SECTION V / VI: JURNAL TIMELINE LAPORAN HARIAN PROYEK
       checkPageBreak(18);
       doc.setFont('Helvetica', 'bold');
@@ -1500,7 +1695,7 @@ export default function App() {
     }
 
     // Add Signature Block "Ttd / Project Manajer" on the last page with proper boundary checks
-    const signatureHeight = 35;
+    const signatureHeight = 40;
     if (y + signatureHeight > 265) {
       // Draw footer for previous page before adding a new page
       drawPageFooter(currentPage);
@@ -1512,10 +1707,36 @@ export default function App() {
       y += 8; // gentle spacing before the signature block on the same page
     }
 
+    // Dynamic Indonesian day & date calculation
+    let reportDateStr = '';
+    const sortedReportsForDate = [...reports].sort((a, b) => a.no - b.no);
+    if (sortedReportsForDate.length > 0) {
+      const lastReport = sortedReportsForDate[sortedReportsForDate.length - 1];
+      const hr = lastReport.tanggalParsed.hari;
+      const tgl = lastReport.tanggalParsed.tanggalStr;
+      const capitalizedHr = hr ? (hr.charAt(0).toUpperCase() + hr.slice(1)) : 'Minggu';
+      reportDateStr = `${capitalizedHr}, ${tgl}`;
+    } else {
+      const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ];
+      const now = new Date();
+      const dayName = days[now.getDay()];
+      const dateNum = now.getDate();
+      const monthName = months[now.getMonth()];
+      const year = now.getFullYear();
+      reportDateStr = `${dayName}, ${dateNum} ${monthName} ${year}`;
+    }
+
     // Draw Signature Block on right side
     doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(8.5);
+    doc.setFontSize(8.0);
     doc.setTextColor(71, 85, 105); // Slate-600
+    doc.text(reportDateStr, 145, y);
+    
+    y += 5;
     doc.text('Ttd,', 145, y);
 
     y += 18; // space for physical signature area
@@ -1525,15 +1746,13 @@ export default function App() {
     doc.setTextColor(15, 23, 42); // Slate-900
     doc.text('Project Manajer', 145, y);
 
-    // Subtle line below Project Manajer name to look extremely official
-    doc.setDrawColor(148, 163, 184); // Slate-400
-    doc.setLineWidth(0.35);
-    doc.line(145, y + 1.2, 185, y + 1.2);
-
     // Draw final page footer for the last page
     drawPageFooter(currentPage);
 
-    doc.save(`Laporan_Audit_Mako_Lengkap_${new Date().toISOString().slice(0, 10)}.pdf`);
+    const pdfFilename = exportMode === 'sector_only'
+      ? `Laporan_Sektoral_A-K_${new Date().toISOString().slice(0, 10)}.pdf`
+      : `Laporan_Audit_Mako_Lengkap_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(pdfFilename);
   };
   
   const getRemainingDays = () => {
@@ -2277,139 +2496,169 @@ export default function App() {
             {/* Modal Body */}
             <div className="space-y-4 text-left">
               
-              {/* Toggle Sections Included Component (Addresses: "hanya untuk laporan mingguan") */}
+              {/* Format Cetak Laporan Selection */}
               <div className="space-y-2">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono block">Elemen Yang Disertakan</span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pb-1">
-                  {/* Toggle 1: S-Curve Mingguan */}
-                  <label className={`flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl border transition-all cursor-pointer ${includeWeeklySCurve ? 'bg-amber-500/10 border-amber-400/50 text-slate-900 shadow-sm' : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
-                    <input 
-                      type="checkbox"
-                      checked={includeWeeklySCurve}
-                      onChange={(e) => setIncludeWeeklySCurve(e.target.checked)}
-                      className="accent-amber-500 h-3 w-3 shrink-0"
-                    />
-                    <span className="text-[10.5px] font-bold">Mingguan</span>
-                  </label>
-                  
-                  {/* Toggle 2: Jurnal Harian */}
-                  <label className={`flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl border transition-all cursor-pointer ${includeDailyTimeline ? 'bg-amber-500/10 border-amber-400/50 text-slate-900 shadow-sm' : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
-                    <input 
-                      type="checkbox"
-                      checked={includeDailyTimeline}
-                      onChange={(e) => setIncludeDailyTimeline(e.target.checked)}
-                      className="accent-amber-500 h-3 w-3 shrink-0"
-                    />
-                    <span className="text-[10.5px] font-bold">Harian</span>
-                  </label>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono block">Format Cetak Laporan</span>
+                <div className="grid grid-cols-2 gap-2 pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setPdfType('comprehensive')}
+                    className={`flex flex-col gap-1 items-start text-left p-3 rounded-2xl border transition-all cursor-pointer ${pdfType === 'comprehensive' ? 'bg-amber-500/10 border-amber-400 text-slate-900 shadow-sm' : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}
+                  >
+                    <span className="text-xs font-black">Laporan Komprehensif</span>
+                    <span className="text-[9px] text-slate-500 leading-normal">Lengkap dengan grafik S-Curve, rincian harian & analisis AI.</span>
+                  </button>
 
-                  {/* Toggle 3: Analisis AI Gemini */}
-                  <label className={`flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl border transition-all cursor-pointer ${includeAIAnalysis ? 'bg-amber-500/10 border-amber-400/50 text-slate-900 shadow-sm' : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
-                    <input 
-                      type="checkbox"
-                      checked={includeAIAnalysis}
-                      onChange={(e) => setIncludeAIAnalysis(e.target.checked)}
-                      className="accent-amber-500 h-3 w-3 shrink-0"
-                    />
-                    <span className="text-[10.5px] font-bold flex items-center gap-0.5">
-                      Analitika AI <Sparkles className="w-2.5 h-2.5 text-amber-500 shrink-0 animate-pulse" />
+                  <button
+                    type="button"
+                    onClick={() => setPdfType('sector_only')}
+                    className={`flex flex-col gap-1 items-start text-left p-3 rounded-2xl border transition-all cursor-pointer ${pdfType === 'sector_only' ? 'bg-amber-500/10 border-amber-400 text-slate-900 shadow-sm' : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}
+                  >
+                    <span className="text-xs font-black flex items-center gap-1">
+                      Laporan Sektoral <span className="text-[7.5px] px-1 py-0.5 bg-amber-500 text-white rounded font-mono font-bold uppercase tracking-wider">A-K Saja</span>
                     </span>
-                  </label>
+                    <span className="text-[9px] text-slate-500 leading-normal">Fokus eksklusif pada rekapitulasi progres per bidang pekerjaan (A-K).</span>
+                  </button>
                 </div>
               </div>
 
-              {/* Dropdown Selector for Daily Scope */}
-              {includeDailyTimeline && (
-                <div className="space-y-2">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono block">Cakupan Jurnal Harian</span>
-                  <div className="relative">
-                    <select
-                      value={pdfScope}
-                      onChange={(e) => setPdfScope(e.target.value as any)}
-                      className="w-full bg-white hover:bg-slate-50 border border-slate-200 py-2.5 pl-3.5 pr-10 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-amber-500 shadow-xs cursor-pointer appearance-none transition-colors"
-                    >
-                      <option value="7">7 Hari Terakhir</option>
-                      <option value="14">14 Hari Terakhir</option>
-                      <option value="all">Seluruh Hari Kerja ({reports.length} Hari)</option>
-                      <option value="custom">Rentang Hari Kustom (Hari Ke-X s/d Hari Ke-Y)</option>
-                      <option value="custom_date">Rentang Tanggal Kalender (Mulai s/d Selesai)</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-slate-400 text-[10px]">
-                      ▼
+              {pdfType === 'comprehensive' && (
+                <>
+                  {/* Toggle Sections Included Component (Addresses: "hanya untuk laporan mingguan") */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono block">Elemen Yang Disertakan</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pb-1">
+                      {/* Toggle 1: S-Curve Mingguan */}
+                      <label className={`flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl border transition-all cursor-pointer ${includeWeeklySCurve ? 'bg-amber-500/10 border-amber-400/50 text-slate-900 shadow-sm' : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input 
+                          type="checkbox"
+                          checked={includeWeeklySCurve}
+                          onChange={(e) => setIncludeWeeklySCurve(e.target.checked)}
+                          className="accent-amber-500 h-3 w-3 shrink-0"
+                        />
+                        <span className="text-[10.5px] font-bold">Mingguan</span>
+                      </label>
+                      
+                      {/* Toggle 2: Jurnal Harian */}
+                      <label className={`flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl border transition-all cursor-pointer ${includeDailyTimeline ? 'bg-amber-500/10 border-amber-400/50 text-slate-900 shadow-sm' : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input 
+                          type="checkbox"
+                          checked={includeDailyTimeline}
+                          onChange={(e) => setIncludeDailyTimeline(e.target.checked)}
+                          className="accent-amber-500 h-3 w-3 shrink-0"
+                        />
+                        <span className="text-[10.5px] font-bold">Harian</span>
+                      </label>
+
+                      {/* Toggle 3: Analisis AI Gemini */}
+                      <label className={`flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl border transition-all cursor-pointer ${includeAIAnalysis ? 'bg-amber-500/10 border-amber-400/50 text-slate-900 shadow-sm' : 'bg-slate-50/50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input 
+                          type="checkbox"
+                          checked={includeAIAnalysis}
+                          onChange={(e) => setIncludeAIAnalysis(e.target.checked)}
+                          className="accent-amber-500 h-3 w-3 shrink-0"
+                        />
+                        <span className="text-[10.5px] font-bold flex items-center gap-0.5">
+                          Analitika AI <Sparkles className="w-2.5 h-2.5 text-amber-500 shrink-0 animate-pulse" />
+                        </span>
+                      </label>
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* Option 4 Extra Input Form: Rentang Hari Kustom (X-Y) */}
-              {includeDailyTimeline && pdfScope === 'custom' && (
-                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 grid grid-cols-2 gap-4 animate-fade-in text-left">
-                  <div>
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1 font-mono">Hari Mulai (Ke-)</label>
-                    <select
-                      value={customStartDay}
-                      onChange={(e) => setCustomStartDay(Number(e.target.value))}
-                      className="bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold py-2 px-2.5 rounded-xl border border-slate-200 w-full outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer shadow-xs"
-                    >
-                      {Array.from({ length: reports.length }, (_, i) => i + 1).map(day => (
-                        <option key={day} value={day}>Hari-{day}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1 font-mono">Hari Akhir (Ke-)</label>
-                    <select
-                      value={customEndDay}
-                      onChange={(e) => setCustomEndDay(Number(e.target.value))}
-                      className="bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold py-2 px-2.5 rounded-xl border border-slate-200 w-full outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer shadow-xs"
-                    >
-                      {Array.from({ length: reports.length }, (_, i) => i + 1).map(day => (
-                        <option key={day} value={day}>Hari-{day}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {customStartDay > customEndDay && (
-                    <div className="col-span-2 text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center gap-1.5 select-none">
-                      <span>⚠️ Hari awal tidak boleh melampaui hari akhir.</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Option 5 Extra Input Form: Rentang Tanggal Kalender (Mulai - Sampai) */}
-              {includeDailyTimeline && pdfScope === 'custom_date' && (
-                <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 grid grid-cols-2 gap-3 animate-fade-in text-left">
-                  <div>
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1 font-mono">Mulai Tanggal</label>
-                    <input
-                      type="date"
-                      value={customStartDateVal}
-                      onChange={(e) => setCustomStartDateVal(e.target.value)}
-                      className="bg-white text-slate-800 text-xs font-bold py-2 px-2 rounded-xl border border-slate-200 w-full outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer shadow-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1 font-mono">Sampai Tanggal</label>
-                    <input
-                      type="date"
-                      value={customEndDateVal}
-                      onChange={(e) => setCustomEndDateVal(e.target.value)}
-                      className="bg-white text-slate-800 text-xs font-bold py-2 px-2 rounded-xl border border-slate-200 w-full outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer shadow-xs"
-                    />
-                  </div>
-                  {customStartDateVal && customEndDateVal && new Date(customStartDateVal) > new Date(customEndDateVal) && (
-                    <div className="col-span-2 text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center gap-1.5 select-none">
-                      <span>⚠️ Tanggal mulai tidak boleh melampaui tanggal selesai.</span>
+                  {/* Dropdown Selector for Daily Scope */}
+                  {includeDailyTimeline && (
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest font-mono block">Cakupan Jurnal Harian</span>
+                      <div className="relative">
+                        <select
+                          value={pdfScope}
+                          onChange={(e) => setPdfScope(e.target.value as any)}
+                          className="w-full bg-white hover:bg-slate-50 border border-slate-200 py-2.5 pl-3.5 pr-10 rounded-xl text-xs font-bold text-slate-800 outline-none focus:ring-1 focus:ring-amber-500 shadow-xs cursor-pointer appearance-none transition-colors"
+                        >
+                          <option value="7">7 Hari Terakhir</option>
+                          <option value="14">14 Hari Terakhir</option>
+                          <option value="all">Seluruh Hari Kerja ({reports.length} Hari)</option>
+                          <option value="custom">Rentang Hari Kustom (Hari Ke-X s/d Hari Ke-Y)</option>
+                          <option value="custom_date">Rentang Tanggal Kalender (Mulai s/d Selesai)</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-slate-400 text-[10px]">
+                          ▼
+                        </div>
+                      </div>
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* Global Warning: if neither Weekly nor Daily nor AI is selected */}
-              {!includeWeeklySCurve && !includeDailyTimeline && !includeAIAnalysis && (
-                <div className="text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center gap-1.5 select-none">
-                  <span>⚠️ Silakan pilih minimal salah satu elemen di atas untuk diekspor ke PDF.</span>
-                </div>
+                  {/* Option 4 Extra Input Form: Rentang Hari Kustom (X-Y) */}
+                  {includeDailyTimeline && pdfScope === 'custom' && (
+                    <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 grid grid-cols-2 gap-4 animate-fade-in text-left">
+                      <div>
+                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1 font-mono">Hari Mulai (Ke-)</label>
+                        <select
+                          value={customStartDay}
+                          onChange={(e) => setCustomStartDay(Number(e.target.value))}
+                          className="bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold py-2 px-2.5 rounded-xl border border-slate-200 w-full outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer shadow-xs"
+                        >
+                          {Array.from({ length: reports.length }, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day}>Hari-{day}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black text-slate-550 uppercase tracking-widest block mb-1 font-mono">Hari Akhir (Ke-)</label>
+                        <select
+                          value={customEndDay}
+                          onChange={(e) => setCustomEndDay(Number(e.target.value))}
+                          className="bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold py-2 px-2.5 rounded-xl border border-slate-200 w-full outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer shadow-xs"
+                        >
+                          {Array.from({ length: reports.length }, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day}>Hari-{day}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {customStartDay > customEndDay && (
+                        <div className="col-span-2 text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center gap-1.5 select-none">
+                          <span>⚠️ Hari awal tidak boleh melampaui hari akhir.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Option 5 Extra Input Form: Rentang Tanggal Kalender (Mulai - Sampai) */}
+                  {includeDailyTimeline && pdfScope === 'custom_date' && (
+                    <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 grid grid-cols-2 gap-3 animate-fade-in text-left">
+                      <div>
+                        <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1 font-mono">Mulai Tanggal</label>
+                        <input
+                          type="date"
+                          value={customStartDateVal}
+                          onChange={(e) => setCustomStartDateVal(e.target.value)}
+                          className="bg-white text-slate-800 text-xs font-bold py-2 px-2 rounded-xl border border-slate-200 w-full outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer shadow-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black text-slate-550 uppercase tracking-widest block mb-1 font-mono">Sampai Tanggal</label>
+                        <input
+                          type="date"
+                          value={customEndDateVal}
+                          onChange={(e) => setCustomEndDateVal(e.target.value)}
+                          className="bg-white text-slate-800 text-xs font-bold py-2 px-2 rounded-xl border border-slate-200 w-full outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer shadow-xs"
+                        />
+                      </div>
+                      {customStartDateVal && customEndDateVal && new Date(customStartDateVal) > new Date(customEndDateVal) && (
+                        <div className="col-span-2 text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center gap-1.5 select-none">
+                          <span>⚠️ Tanggal mulai tidak boleh melampaui tanggal selesai.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Global Warning: if neither Weekly nor Daily nor AI is selected */}
+                  {!includeWeeklySCurve && !includeDailyTimeline && !includeAIAnalysis && (
+                    <div className="text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-200 p-2.5 rounded-xl flex items-center gap-1.5 select-none">
+                      <span>⚠️ Silakan pilih minimal salah satu elemen di atas untuk diekspor ke PDF.</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -2425,9 +2674,11 @@ export default function App() {
               <button
                 type="button"
                 disabled={
-                  (!includeWeeklySCurve && !includeDailyTimeline && !includeAIAnalysis) ||
-                  (includeDailyTimeline && pdfScope === 'custom' && customStartDay > customEndDay) ||
-                  (includeDailyTimeline && pdfScope === 'custom_date' && customStartDateVal && customEndDateVal && new Date(customStartDateVal) > new Date(customEndDateVal))
+                  pdfType === 'comprehensive' && (
+                    (!includeWeeklySCurve && !includeDailyTimeline && !includeAIAnalysis) ||
+                    (includeDailyTimeline && pdfScope === 'custom' && customStartDay > customEndDay) ||
+                    (includeDailyTimeline && pdfScope === 'custom_date' && customStartDateVal && customEndDateVal && new Date(customStartDateVal) > new Date(customEndDateVal))
+                  )
                 }
                 onClick={() => {
                   exportDashboardToPDF(
@@ -2435,11 +2686,12 @@ export default function App() {
                     customStartDay, 
                     customEndDay, 
                     customStartDateVal, 
-                    customEndDateVal
+                    customEndDateVal,
+                    pdfType
                   );
                   setShowExportModal(false);
                 }}
-                className="px-5 py-2.5 bg-gradient-to-tr from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-650 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 hover:text-white font-extrabold rounded-xl text-xs shadow-md shadow-amber-500/10 transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-gradient-to-tr from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-655 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 hover:text-white font-extrabold rounded-xl text-xs shadow-md shadow-amber-500/10 transition-all cursor-pointer"
               >
                 Unduh Dokumen PDF
               </button>
