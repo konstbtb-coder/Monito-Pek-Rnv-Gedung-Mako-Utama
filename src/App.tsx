@@ -1583,8 +1583,8 @@ export default function App() {
                 <span className="text-sm font-black animate-pulse">⚡</span>
               </div>
               <div>
-                <h2 className="text-sm font-black tracking-tight text-white font-sans">Portal Genset</h2>
-                <p className="text-[9px] font-bold text-cyan-400 font-mono tracking-widest uppercase mt-0.5">TELEMETRI TERPADU</p>
+                <h2 className="text-sm font-black tracking-tight text-white font-sans">Progres Pek. Rnv. Mako</h2>
+                <p className="text-[9px] font-bold text-cyan-400 font-mono tracking-widest uppercase mt-0.5">SIPIL & ARSITEKTUR</p>
               </div>
             </div>
             {/* Button to collapse/pin inside sidebar on desktop */}
