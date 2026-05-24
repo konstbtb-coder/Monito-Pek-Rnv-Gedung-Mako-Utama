@@ -559,6 +559,8 @@ export default function App() {
     doc.setFontSize(10.5);
     if (exportMode === 'sector_only') {
       doc.text('LAPORAN REKAPITULASI PROGRES SEKTORAL PEKERJAAN', 41, y + 10);
+    } else if (!includeWeeklySCurve) {
+      doc.text('LAPORAN DOKUMEN JURNAL HARIAN KEMAJUAN PROYEK', 41, y + 10);
     } else {
       doc.text('LAPORAN MASTER AUDIT & INTEGRASI S-CURVE PROYEK', 41, y + 10);
     }
@@ -568,6 +570,8 @@ export default function App() {
     doc.setTextColor(148, 163, 184); // slate-400
     if (exportMode === 'sector_only') {
       doc.text('DETAIL KEMAJUAN DAN DISTRIBUSI BOBOT FISIK SEKTOR BIDANG (KATEGORI A S/D K)', 41, y + 15);
+    } else if (!includeWeeklySCurve) {
+      doc.text('DOKUMEN REKAPITULASI AKTIVITAS, LOGISTIK, KATEGORI TENAGA & CUACA HARIAN', 41, y + 15);
     } else {
       doc.text('DOKUMEN INTEGRAL NILAI ANALISIS MINGGUAN DAN JURNAL HARIAN LENGKAP', 41, y + 15);
     }
@@ -644,165 +648,303 @@ export default function App() {
     const cardHeight = 36;
     
     if (exportMode === 'comprehensive') {
-      // --- CARD 1: KESEHATAN PROYEK ---
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(226, 232, 240); // slate-200
-      doc.setLineWidth(0.35);
-      doc.roundedRect(15, y, 58, cardHeight, 3.5, 3.5, 'FD');
-      
-      // Left decorative bar
-      doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
-      doc.roundedRect(15, y, 1.5, cardHeight, 3.5, 3.5, 'F');
-      doc.rect(16, y, 0.5, cardHeight, 'F');
+      if (!includeWeeklySCurve) {
+        // --- CARD 1: TOTAL HARI PENINJAUAN ---
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.35);
+        doc.roundedRect(15, y, 58, cardHeight, 3.5, 3.5, 'FD');
+        
+        // Left decorative bar (slate-900)
+        doc.setFillColor(15, 23, 42);
+        doc.roundedRect(15, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+        doc.rect(16, y, 0.5, cardHeight, 'F');
 
-      // Title Tag
-      doc.setFillColor(248, 250, 252); // slate-50
-      doc.roundedRect(19, y + 3.5, 26, 4, 1, 1, 'F');
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.5);
-      doc.setTextColor(71, 85, 105); // slate-600
-      doc.text('KESEHATAN PROYEK', 20.5, y + 6.3);
+        // Title Tag
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.roundedRect(19, y + 3.5, 30, 4, 1, 1, 'F');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105); // slate-600
+        doc.text('RINCIAN HARI EVALUASI', 20.5, y + 6.3);
 
-      // Indicator Dot green/red
-      doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
-      doc.ellipse(15 + 58 - 5, y + 5.5, 1.0, 1.0, 'F');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text('TOTAL HARI PENINJAUAN', 19, y + 12);
 
-      // Kondisi Kumulatif
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.5);
-      doc.setTextColor(148, 163, 184); // slate-400
-      doc.text('KONDISI KUMULATIF', 19, y + 12);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text(`${totalDaysAll} Hari Kerja`, 19, y + 18.5);
 
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.text(healthStatusStr, 19, y + 18.5);
+        // Description
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105);
+        const card1Desc = `Menyajikan seluruh rincian progres yang terdata secara kumulatif dari awal pelaksanaan konstruksi.`;
+        const card1Lines = doc.splitTextToSize(card1Desc, 51);
+        card1Lines.forEach((line: string, idx: number) => {
+          doc.text(line, 19, y + 23.5 + (idx * 2.5));
+        });
 
-      // Description text wrapped nicely
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(5.5);
-      doc.setTextColor(71, 85, 105); // slate-600
-      const healthLines = doc.splitTextToSize(healthDesc, 51);
-      healthLines.forEach((line: string, idx: number) => {
-        doc.text(line, 19, y + 23.5 + (idx * 2.5));
-      });
-
-      // Measurement week footer
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.2);
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.text(`Minggu Pengukuran: ${weekLabel}`, 19, y + 32.5);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.2);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Sumber: Sinkronisasi Jurnal Lapangan`, 19, y + 32.5);
 
 
-      // --- CARD 2: PENYIMPANGAN S-CURVE ---
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(226, 232, 240); // slate-200
-      doc.setLineWidth(0.35);
-      doc.roundedRect(76, y, 58, cardHeight, 3.5, 3.5, 'FD');
+        // --- CARD 2: RATA-RATA TENAGA HARIAN ---
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.35);
+        doc.roundedRect(76, y, 58, cardHeight, 3.5, 3.5, 'FD');
 
-      // Left decorative bar (emerald or red depending on deviation)
-      const deviationColorRGB = latestDeviation >= 0 ? [16, 185, 129] : [239, 68, 68];
-      doc.setFillColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
-      doc.roundedRect(76, y, 1.5, cardHeight, 3.5, 3.5, 'F');
-      doc.rect(77, y, 0.5, cardHeight, 'F');
+        // Left decorative bar (amber)
+        doc.setFillColor(245, 158, 11);
+        doc.roundedRect(76, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+        doc.rect(77, y, 0.5, cardHeight, 'F');
 
-      // Title Tag
-      doc.setFillColor(248, 250, 252); // slate-50
-      doc.roundedRect(80, y + 3.5, 31, 4, 1, 1, 'F');
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.5);
-      doc.setTextColor(71, 85, 105); // slate-600
-      doc.text('PENYIMPANGAN S-CURVE', 81.5, y + 6.3);
+        // Title Tag
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.roundedRect(76 + 4, y + 3.5, 30, 4, 1, 1, 'F');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105); // slate-600
+        doc.text('MOBILISASI PEKERJA', 76 + 5.5, y + 6.3);
 
-      // Deviation Title & value
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.5);
-      doc.setTextColor(148, 163, 184); // slate-400
-      doc.text('DEVIASI TERBARU TERHITUNG', 80, y + 12);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text('RERATA TENAGA LAPANGAN', 80, y + 12);
 
-      const devSign = latestDeviation >= 0 ? '+' : '';
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
-      doc.text(`${devSign}${latestDeviation.toFixed(3)}%`, 80, y + 18.5);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text(`${averageWorkersAll} Org / Hari`, 80, y + 18.5);
 
-      // Description text wrapped nicely
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(5.5);
-      doc.setTextColor(71, 85, 105); // slate-600
-      const devDesc = `Deviasi dihitung dari selisih antara realisasi aktual ${latestActual.toFixed(2)}% terhadap rancangan rencana ${latestPlan.toFixed(2)}%.`;
-      const devLines = doc.splitTextToSize(devDesc, 51);
-      devLines.forEach((line: string, idx: number) => {
-        doc.text(line, 80, y + 23.5 + (idx * 2.5));
-      });
+        // Description
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105);
+        const card2Desc = `Rata-rata kapasitas dari mandor, tukang batu, tukang plafond, keramik, besi, dan pekerja pembantu harian.`;
+        const card2Lines = doc.splitTextToSize(card2Desc, 51);
+        card2Lines.forEach((line: string, idx: number) => {
+          doc.text(line, 80, y + 23.5 + (idx * 2.5));
+        });
 
-      // Deviation Status footer
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.2);
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.text('Status Deviasi: ', 80, y + 32.5);
-      doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
-      doc.text(latestDeviation >= 0 ? 'SURPLUS VOL' : 'KETERLAMBATAN', 93, y + 32.5);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.2);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Mobilisasi Puncak: ${maxWorkersAll} Orang`, 80, y + 32.5);
 
 
-      // --- CARD 3: SISA RENCANA PROYEK ---
-      doc.setFillColor(255, 255, 255);
-      doc.setDrawColor(226, 232, 240); // slate-200
-      doc.setLineWidth(0.35);
-      doc.roundedRect(137, y, 58, cardHeight, 3.5, 3.5, 'FD');
+        // --- CARD 3: KENDALA INTENSITAS HUJAN ---
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.35);
+        doc.roundedRect(137, y, 58, cardHeight, 3.5, 3.5, 'FD');
 
-      // Left decorative bar (Amber)
-      doc.setFillColor(245, 158, 11);
-      doc.roundedRect(137, y, 1.5, cardHeight, 3.5, 3.5, 'F');
-      doc.rect(138, y, 0.5, cardHeight, 'F');
+        // Left decorative bar (blue)
+        doc.setFillColor(59, 130, 246);
+        doc.roundedRect(137, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+        doc.rect(138, y, 0.5, cardHeight, 'F');
 
-      // Title Tag
-      doc.setFillColor(248, 250, 252); // slate-50
-      doc.roundedRect(141, y + 3.5, 31, 4, 1, 1, 'F');
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.5);
-      doc.setTextColor(71, 85, 105); // slate-600
-      doc.text('SISA RENCANA PROYEK', 142.5, y + 6.3);
+        // Title Tag
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.roundedRect(141, y + 3.5, 30, 4, 1, 1, 'F');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105); // slate-600
+        doc.text('FAKTOR PENGHAMBAT', 142.5, y + 6.3);
 
-      // Remaining Title & value
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.5);
-      doc.setTextColor(148, 163, 184); // slate-400
-      doc.text('PEKERJAAN TERSISA', 141, y + 12);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text('INTENSITAS HARI HUJAN', 141, y + 12);
 
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.text(`${(100 - latestActual).toFixed(2)}%`, 141, y + 18.5);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text(`${rainyDaysAll} Hari (${rainyPctAll}%)`, 141, y + 18.5);
 
-      // progress bar bar label
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.2);
-      doc.setTextColor(148, 163, 184); // slate-400
-      doc.text('Rasio Realisasi Selesai', 141, y + 23);
-      
-      doc.setFont('Helvetica', 'bold');
-      doc.setTextColor(16, 185, 129); // emerald
-      doc.text(`${latestActual.toFixed(2)}% / 100%`, 190, y + 23, { align: 'right' });
+        // Description
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105);
+        const card3Desc = `Frekuensi hari yang mengalami curah hujan (pagi/siang/sore) yang berpotensi melambatkan target sipil basah.`;
+        const card3Lines = doc.splitTextToSize(card3Desc, 51);
+        card3Lines.forEach((line: string, idx: number) => {
+          doc.text(line, 141, y + 23.5 + (idx * 2.5));
+        });
 
-      // progress bar track (grey)
-      doc.setFillColor(241, 245, 249); // slate-100
-      doc.roundedRect(141, y + 24.8, 49, 1.8, 0.9, 0.9, 'F');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.2);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Rasio Hari Hujan: ${rainyPctAll}.00% dari total`, 141, y + 32.5);
 
-      // progress bar fill (green)
-      const fillWidth = Math.max(1, Math.min(49, (latestActual / 100) * 49));
-      doc.setFillColor(16, 185, 129); // emerald-500
-      doc.roundedRect(141, y + 24.8, fillWidth, 1.8, 0.9, 0.9, 'F');
+        y += cardHeight + 6;
+      } else {
+        // --- CARD 1: KESEHATAN PROYEK ---
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.35);
+        doc.roundedRect(15, y, 58, cardHeight, 3.5, 3.5, 'FD');
+        
+        // Left decorative bar
+        doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
+        doc.roundedRect(15, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+        doc.rect(16, y, 0.5, cardHeight, 'F');
 
-      // Contract completion footer
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(5.2);
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.text('Total Target Kontrak: ', 141, y + 32.5);
-      doc.setTextColor(71, 85, 105);
-      doc.text('100.00% Selesai', 160, y + 32.5);
+        // Title Tag
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.roundedRect(19, y + 3.5, 26, 4, 1, 1, 'F');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105); // slate-600
+        doc.text('KESEHATAN PROYEK', 20.5, y + 6.3);
 
-      y += cardHeight + 6;
+        // Indicator Dot green/red
+        doc.setFillColor(healthColorRGB[0], healthColorRGB[1], healthColorRGB[2]);
+        doc.ellipse(15 + 58 - 5, y + 5.5, 1.0, 1.0, 'F');
+
+        // Kondisi Kumulatif
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text('KONDISI KUMULATIF', 19, y + 12);
+
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text(healthStatusStr, 19, y + 18.5);
+
+        // Description text wrapped nicely
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105); // slate-600
+        const healthLines = doc.splitTextToSize(healthDesc, 51);
+        healthLines.forEach((line: string, idx: number) => {
+          doc.text(line, 19, y + 23.5 + (idx * 2.5));
+        });
+
+        // Measurement week footer
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.2);
+        doc.setTextColor(100, 116, 139); // slate-500
+        doc.text(`Minggu Pengukuran: ${weekLabel}`, 19, y + 32.5);
+
+
+        // --- CARD 2: PENYIMPANGAN S-CURVE ---
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.35);
+        doc.roundedRect(76, y, 58, cardHeight, 3.5, 3.5, 'FD');
+
+        // Left decorative bar (emerald or red depending on deviation)
+        const deviationColorRGB = latestDeviation >= 0 ? [16, 185, 129] : [239, 68, 68];
+        doc.setFillColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
+        doc.roundedRect(76, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+        doc.rect(77, y, 0.5, cardHeight, 'F');
+
+        // Title Tag
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.roundedRect(80, y + 3.5, 31, 4, 1, 1, 'F');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105); // slate-600
+        doc.text('PENYIMPANGAN S-CURVE', 81.5, y + 6.3);
+
+        // Deviation Title & value
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text('DEVIASI TERBARU TERHITUNG', 80, y + 12);
+
+        const devSign = latestDeviation >= 0 ? '+' : '';
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
+        doc.text(`${devSign}${latestDeviation.toFixed(3)}%`, 80, y + 18.5);
+
+        // Description text wrapped nicely
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105); // slate-600
+        const devDesc = `Deviasi dihitung dari selisih antara realisasi aktual ${latestActual.toFixed(2)}% terhadap rancangan rencana ${latestPlan.toFixed(2)}%.`;
+        const devLines = doc.splitTextToSize(devDesc, 51);
+        devLines.forEach((line: string, idx: number) => {
+          doc.text(line, 80, y + 23.5 + (idx * 2.5));
+        });
+
+        // Deviation Status footer
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.2);
+        doc.setTextColor(100, 116, 139); // slate-500
+        doc.text('Status Deviasi: ', 80, y + 32.5);
+        doc.setTextColor(deviationColorRGB[0], deviationColorRGB[1], deviationColorRGB[2]);
+        doc.text(latestDeviation >= 0 ? 'SURPLUS VOL' : 'KETERLAMBATAN', 93, y + 32.5);
+
+
+        // --- CARD 3: SISA RENCANA PROYEK ---
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(226, 232, 240); // slate-200
+        doc.setLineWidth(0.35);
+        doc.roundedRect(137, y, 58, cardHeight, 3.5, 3.5, 'FD');
+
+        // Left decorative bar (Amber)
+        doc.setFillColor(245, 158, 11);
+        doc.roundedRect(137, y, 1.5, cardHeight, 3.5, 3.5, 'F');
+        doc.rect(138, y, 0.5, cardHeight, 'F');
+
+        // Title Tag
+        doc.setFillColor(248, 250, 252); // slate-50
+        doc.roundedRect(141, y + 3.5, 31, 4, 1, 1, 'F');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(71, 85, 105); // slate-600
+        doc.text('SISA RENCANA PROYEK', 142.5, y + 6.3);
+
+        // Remaining Title & value
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text('PEKERJAAN TERSISA', 141, y + 12);
+
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text(`${(100 - latestActual).toFixed(2)}%`, 141, y + 18.5);
+
+        // progress bar bar label
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.2);
+        doc.setTextColor(148, 163, 184); // slate-400
+        doc.text('Rasio Realisasi Selesai', 141, y + 23);
+        
+        doc.setFont('Helvetica', 'bold');
+        doc.setTextColor(16, 185, 129); // emerald
+        doc.text(`${latestActual.toFixed(2)}% / 100%`, 190, y + 23, { align: 'right' });
+
+        // progress bar track (grey)
+        doc.setFillColor(241, 245, 249); // slate-100
+        doc.roundedRect(141, y + 24.8, 49, 1.8, 0.9, 0.9, 'F');
+
+        // progress bar fill (green)
+        const fillWidth = Math.max(1, Math.min(49, (latestActual / 100) * 49));
+        doc.setFillColor(16, 185, 129); // emerald-500
+        doc.roundedRect(141, y + 24.8, fillWidth, 1.8, 0.9, 0.9, 'F');
+
+        // Contract completion footer
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(5.2);
+        doc.setTextColor(100, 116, 139); // slate-500
+        doc.text('Total Target Kontrak: ', 141, y + 32.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text('100.00% Selesai', 160, y + 32.5);
+
+        y += cardHeight + 6;
+      }
     }
 
     if (includeWeeklySCurve) {

@@ -162,149 +162,447 @@ export function ReportTimeline({ data }: ReportTimelineProps) {
   // Client-side PDF Exporter using jsPDF
   const handleExportPDF = () => {
     const doc = new jsPDF();
-    
-    const primaryColor = [15, 23, 42];  // #0f172a
-    const secondaryColor = [71, 85, 105]; // #475569
-    const accentColor = [245, 158, 11]; // #f59e0b
-    
-    // Set up header document metadata
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.text('LAPORAN HARIAN PEKERJAAN PROYEK', 14, 20);
-    
-    doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')}  |  User: konstbtb@gmail.com`, 14, 26);
-    doc.text(`Filter Aktif: ${sortedData.length} Hari Kerja Terpilih`, 14, 31);
-    
-    // Draw visual accent line separator
-    doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.setLineWidth(1.5);
-    doc.line(14, 34, 196, 34);
-    
-    let yPosition = 42;
     const pageHeight = doc.internal.pageSize.height;
-    
-    sortedData.forEach((report) => {
-      // Manage page break
-      if (yPosition > pageHeight - 65) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      // Rounded Card Header Banner
-      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.rect(14, yPosition, 182, 9, 'F');
-      
-      // Small gold vertical label tag on the left
-      doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.rect(14, yPosition, 2, 9, 'F');
-      
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(9.5);
-      doc.setTextColor(255, 255, 255);
-      doc.text(`HARI KE-${report.no}  |  ${report.tanggalParsed.hari.toUpperCase()}, ${report.tanggalParsed.tanggalStr.toUpperCase()}`, 20, yPosition + 6);
-      
-      yPosition += 14;
-      
-      // Section A: Tasks
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-      doc.text('A. URAIAN KEGIATAN / PEKERJAAN TERLAKSANA', 16, yPosition);
-      yPosition += 4.5;
-      
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(30, 41, 59);
-      
-      const activities = report.uraianKegiatan || [];
-      if (activities.length > 0) {
-        activities.forEach(act => {
-          const lines = doc.splitTextToSize(`• ${act}`, 174);
-          lines.forEach((line: string) => {
-            if (yPosition > pageHeight - 15) {
-              doc.addPage();
-              yPosition = 20;
-            }
-            doc.text(line, 19, yPosition);
-            yPosition += 4;
-          });
-        });
-      } else {
-        doc.text('Tidak ada rincian kegiatan terekam.', 19, yPosition);
-        yPosition += 4;
-      }
-      
-      yPosition += 2;
-      
-      // Section B: Materials
-      if (yPosition > pageHeight - 25) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-      doc.text('B. PENGGUNAAN MATERIAL / LOGISTIK', 16, yPosition);
-      yPosition += 4.5;
-      
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(30, 41, 59);
-      const matText = report.material || 'Tidak ada sirkulasi material di lapangan.';
-      const matLines = doc.splitTextToSize(matText, 174);
-      matLines.forEach((line: string) => {
-        if (yPosition > pageHeight - 15) {
-          doc.addPage();
-          yPosition = 20;
-        }
-        doc.text(line, 19, yPosition);
-        yPosition += 4;
-      });
-      
-      yPosition += 2;
-      
-      // Section C: Resources & Environment
-      if (yPosition > pageHeight - 28) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-      doc.text('C. SUMBER DAYA & KONDISI LAPANGAN', 16, yPosition);
-      yPosition += 4.5;
-      
-      // Subtle container box for summary statistics
-      doc.setDrawColor(226, 232, 240); // slate-200
-      doc.setFillColor(248, 250, 252); // slate-50
-      doc.rect(16, yPosition, 178, 14, 'FD');
-      
-      const p = report.pekerjaParsed;
-      const workerSummary = `Mandor: ${p.mandor}  |  Tk. Batu: ${p.tukangBatu}  |  Tk. Plafond: ${p.tukangPlafond}  |  Tk. Keramik: ${p.tukangKeramik}  |  Tk. Besi: ${p.tukangBesi}  |  Pekerja: ${p.pekerja}  |  Total: ${p.total} Org`;
-      const weatherSummary = `Pagi: ${report.cuaca.pagi}  |  Siang: ${report.cuaca.siang}  |  Sore: ${report.cuaca.sore}`;
-      
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.setTextColor(71, 85, 105);
-      doc.text('Mobilisasi Pekerja :', 19, yPosition + 4.5);
-      doc.setFont('Helvetica', 'normal');
-      doc.text(workerSummary, 43, yPosition + 4.5);
-      
-      doc.setFont('Helvetica', 'bold');
-      doc.text('Kondisi Cuaca :', 19, yPosition + 9.5);
-      doc.setFont('Helvetica', 'normal');
-      doc.text(weatherSummary, 43, yPosition + 9.5);
-      
-      yPosition += 22; // increment spacer to next day report
+    const pageWidth = doc.internal.pageSize.width;
+    let currentPage = 1;
 
-      yPosition += 8; // gentle padding before the next report card starts
+    // Beautiful Executive Brand Colors
+    const primaryColor = [15, 23, 42];  // slate-900 (#0f172a)
+    const secondaryColor = [71, 85, 105]; // slate-600 (#475569)
+    const accentColor = [245, 158, 11]; // amber-500 (#f59e0b)
+    const thinBorderColor = [226, 232, 240]; // slate-200 (#e2e8f0)
+    const cardBgColor = [248, 250, 252]; // slate-50 (#f8fafc)
+
+    // Helper functions for consistent branding across multiple pages
+    const drawWatermark = () => {
+      const origFont = doc.getFont().fontName;
+      const origSize = doc.getFontSize();
+      const origColor = doc.getTextColor();
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(44);
+      doc.setTextColor(241, 245, 249); // slate-100 / very light gray
+      
+      doc.text('DOKUMEN INTEGRAL', 35, 130, { angle: 36 });
+      doc.text('JURNAL SIPIL HARIAN', 35, 220, { angle: 36 });
+
+      doc.setFont(origFont);
+      doc.setFontSize(origSize);
+      doc.setTextColor(origColor);
+    };
+
+    const drawPageFooter = (pageNo: number) => {
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(148, 163, 184); // slate-400
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.setLineWidth(0.2);
+      doc.line(15, pageHeight - 12, 195, pageHeight - 12);
+      doc.text(`Halaman ${pageNo}`, 15, pageHeight - 7);
+      doc.text('Dokumen Resmi Pemantauan Sipil Konstruksi Mako Digital • Database Jurnal Harian', 195, pageHeight - 7, { align: 'right' });
+    };
+
+    // Global Y coordinate tracking
+    let y = 15;
+
+    const checkPageBreak = (neededHeight: number) => {
+      if (y + neededHeight > pageHeight - 18) {
+        drawPageFooter(currentPage);
+        doc.addPage();
+        currentPage++;
+        drawWatermark();
+        
+        // Dynamic page top headers
+        doc.setFillColor(15, 23, 42); // slate-900 header line
+        doc.rect(15, 12, 180, 1, 'F');
+        
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text('JURNAL DOKUMEN HARIAN PEKERJAAN - KEMAJUAN FISIK', 15, 17);
+        
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Database Audit Jurnal Harian Lengkap | konstbtb@gmail.com`, 195, 17, { align: 'right' });
+        
+        y = 23;
+      }
+    };
+
+    // Calculate aggregated daily statistics for Page 1 Card summary
+    const totalDays = sortedData.length;
+    let totalWorkers = 0;
+    let maxWorkers = 0;
+    let rainyDays = 0;
+    
+    sortedData.forEach(r => {
+      const p = r.pekerjaParsed;
+      totalWorkers += p.total;
+      if (p.total > maxWorkers) maxWorkers = p.total;
+      
+      const isRainy = 
+        r.cuaca.pagi.toLowerCase().includes('hujan') ||
+        r.cuaca.siang.toLowerCase().includes('hujan') ||
+        r.cuaca.sore.toLowerCase().includes('hujan');
+      if (isRainy) {
+        rainyDays++;
+      }
     });
     
-    doc.save(`Laporan_Harian_Filtered_${new Date().toISOString().slice(0, 10)}.pdf`);
+    const averageWorkers = totalDays > 0 ? Math.round((totalWorkers / totalDays) * 10) / 10 : 0;
+    const rainyPct = totalDays > 0 ? Math.round((rainyDays / totalDays) * 100) : 0;
+
+    // --- INITIALIZE PAGE 1 ---
+    drawWatermark();
+
+    // 1. BRAND HEADER BANNER
+    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.roundedRect(15, y, 180, 26, 3, 3, 'F');
+
+    // Accent left strip
+    doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.rect(15, y, 4, 26, 'F');
+
+    // Logo Emblem Box
+    doc.setFillColor(245, 158, 11); // Amber background
+    doc.roundedRect(24, y + 4.5, 12, 12, 2.5, 2.5, 'F');
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 23, 42); // slate-900 text
+    doc.text('M', 28.5, y + 11.5);
+    doc.setFontSize(4);
+    doc.setTextColor(255, 255, 255);
+    doc.text('MAKO', 28, y + 15);
+
+    // Title & Subtitles inside text area
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('LAPORAN HARIAN PEKERJAAN PROYEK', 41, y + 9);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(226, 232, 240); // slate-200
+    doc.text('DOKUMEN RESMI JURNAL TIMELINE PEKERJAAN GEDUNG MAKO UTAMA', 41, y + 14);
+    
+    doc.setFontSize(6);
+    doc.setTextColor(148, 163, 184); // slate-400
+    const printTimeStr = new Date().toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
+    doc.text(`Sumber: Sinkronisasi Google Sheets Terfilter \u00a0\u00a0|\u00a0\u00a0 Waktu Cetak: ${printTimeStr} WIB \u00a0\u00a0|\u00a0\u00a0 Operator: konstbtb@gmail.com`, 41, y + 18.5);
+
+    y += 28;
+
+    // 2. PROJECT AGREEMENT DETAILS BOX (BOXED METADATA)
+    doc.setFillColor(cardBgColor[0], cardBgColor[1], cardBgColor[2]);
+    doc.setDrawColor(thinBorderColor[0], thinBorderColor[1], thinBorderColor[2]);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, y, 180, 26, 2, 2, 'FD');
+
+    // Left marker ribbon
+    doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.rect(15, y, 1.8, 26, 'F');
+
+    // Metadata header
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(15, 23, 42);
+    doc.text('INFORMASI PERJANJIAN & DETAIL KONTRAK PROYEK', 20, y + 4.5);
+
+    // Grid details
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(71, 85, 105);
+
+    doc.setFont('Helvetica', 'bold'); doc.text('Nama Pekerjaan :', 20, y + 10); doc.setFont('Helvetica', 'normal'); doc.text('Pembangunan Gedung Kantor Mako Utama R2', 39, y + 10);
+    doc.setFont('Helvetica', 'bold'); doc.text('Lokasi Utama \u00a5 :', 20, y + 14); doc.setFont('Helvetica', 'normal'); doc.text('Komp. Komando Latihan Tempur Daerah Khusus', 39, y + 14);
+    doc.setFont('Helvetica', 'bold'); doc.text('Nomor Kontrak :', 20, y + 18); doc.setFont('Helvetica', 'normal'); doc.text('09.KTR/PPK-MAKO/V/2026', 39, y + 18);
+    doc.setFont('Helvetica', 'bold'); doc.text('Nilai Anggaran :', 20, y + 22); doc.setFont('Helvetica', 'normal'); doc.text('Rp 12.450.000.000,00 (Dua Belas Miliar Empat Ratus Lima Puluh Juta Rupiah)', 39, y + 22);
+
+    doc.setFont('Helvetica', 'bold'); doc.text('Tahun Anggaran :', 115, y + 10); doc.setFont('Helvetica', 'normal'); doc.text('APBN 2026', 134, y + 10);
+    doc.setFont('Helvetica', 'bold'); doc.text('Kontraktor S. :', 115, y + 14); doc.setFont('Helvetica', 'normal'); doc.text('PT Mako Engineering Perkasa', 134, y + 14);
+    doc.setFont('Helvetica', 'bold'); doc.text('Konsultan Peng. :', 115, y + 18); doc.setFont('Helvetica', 'normal'); doc.text('CV Pratama Audit Sipilindo', 134, y + 18);
+    doc.setFont('Helvetica', 'bold'); doc.text('Status Dokumen :', 115, y + 22); doc.setFont('Helvetica', 'normal'); doc.text('TERVERIFIKASI SISTEM (MAKO-DIGITAL)', 134, y + 22);
+
+    y += 32;
+
+    // 3. THREE DYNAMIC SUMMARY STATS CARDS BLOCK
+    const cardWidth = 56.5;
+    const cardHeight = 36.5;
+    const cardGap = 5.25;
+
+    // CARD 1: Total peninjauan harian
+    doc.setFillColor(cardBgColor[0], cardBgColor[1], cardBgColor[2]);
+    doc.setDrawColor(thinBorderColor[0], thinBorderColor[1], thinBorderColor[2]);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(15, y, cardWidth, cardHeight, 1.5, 1.5, 'FD');
+    doc.setFillColor(15, 23, 42); // Slate top slice
+    doc.rect(15, y, cardWidth, 2.5, 'F');
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text('TOTAL HARI PENINJAUAN', 19, y + 8);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(15, 23, 42);
+    doc.text(`${totalDays}`, 19, y + 19);
+    doc.setFontSize(7.5);
+    doc.text(' Hari Kerja', 19 + doc.getTextWidth(`${totalDays}`), y + 19);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(5.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Rincian data harian hasil filter`, 19, y + 25);
+    doc.text(`kondisi lapangan konstruksi mako.`, 19, y + 28);
+    doc.text(`Mewakili ${totalDays} entitas spreadsheet.`, 19, y + 31);
+
+    // CARD 2: Rata-rata tenaga harian
+    let cardX2 = 15 + cardWidth + cardGap;
+    doc.setFillColor(cardBgColor[0], cardBgColor[1], cardBgColor[2]);
+    doc.setDrawColor(thinBorderColor[0], thinBorderColor[1], thinBorderColor[2]);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(cardX2, y, cardWidth, cardHeight, 1.5, 1.5, 'FD');
+    doc.setFillColor(245, 158, 11); // Amber top slice
+    doc.rect(cardX2, y, cardWidth, 2.5, 'F');
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text('RERATA TENAGA HARIAN', cardX2 + 4, y + 8);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(15, 23, 42);
+    doc.text(`${averageWorkers}`, cardX2 + 4, y + 19);
+    doc.setFontSize(7.5);
+    doc.text(' Orang / Hari', cardX2 + 4 + doc.getTextWidth(`${averageWorkers}`), y + 19);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(5.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Rata-rata mobilisasi harian`, cardX2 + 4, y + 25);
+    doc.text(`seluruh bidang kompetensi tukang.`, cardX2 + 4, y + 28);
+    doc.text(`Puncak tertinggi: ${maxWorkers} orang pekerja.`, cardX2 + 4, y + 31);
+
+    // CARD 3: Intensitas Hujan
+    let cardX3 = cardX2 + cardWidth + cardGap;
+    doc.setFillColor(cardBgColor[0], cardBgColor[1], cardBgColor[2]);
+    doc.setDrawColor(thinBorderColor[0], thinBorderColor[1], thinBorderColor[2]);
+    doc.setLineWidth(0.2);
+    doc.roundedRect(cardX3, y, cardWidth, cardHeight, 1.5, 1.5, 'FD');
+    doc.setFillColor(15, 23, 42); // Sky-950 top slice
+    doc.rect(cardX3, y, cardWidth, 2.5, 'F');
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text('KENDALA INTENSITAS HUJAN', cardX3 + 4, y + 8);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(15, 23, 42);
+    doc.text(`${rainyDays}`, cardX3 + 4, y + 19);
+    doc.setFontSize(7.5);
+    doc.text(` Hari (${rainyPct}%)`, cardX3 + 4 + doc.getTextWidth(`${rainyDays}`), y + 19);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(5.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Jumlah hari kerja produktif`, cardX3 + 4, y + 25);
+    doc.text(`tercatat mengalami curah hujan`, cardX3 + 4, y + 28);
+    doc.text(`pagi, siang, atau sore hari.`, cardX3 + 4, y + 31);
+
+    y += cardHeight + 8;
+
+    // Section Header: Jurnal Timeline
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text('RINCIAN HISTORIS JURNAL HARIAN TERDATA', 15, y);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.4);
+    doc.line(15, y + 1.8, 195, y + 1.8);
+
+    y += 6.5;
+
+    // 4. DETAILED TIMELINE BLOCK PROCESSING
+    sortedData.forEach((report) => {
+      // Structure strings & split to fit width
+      const actWords = report.uraianKegiatan || [];
+      const formattedTasks = actWords.length > 0
+        ? actWords.map(t => `• ${t}`)
+        : ['• Tidak ada uraian kegiatan terlaksana yang tercatat.'];
+      
+      const taskInLines: string[] = [];
+      formattedTasks.forEach(task => {
+        const lines = doc.splitTextToSize(task, 175);
+        taskInLines.push(...lines);
+      });
+
+      const matText = report.material || 'Tidak ada sirkulasi pemasukan material konstruksi.';
+      const matLines = doc.splitTextToSize(matText, 175);
+
+      const boxHeight = 11.0; // Compact statistics panel height
+      
+      // Card height calculation:
+      // Header: 5.2 | Lab A: 4.5 | Task rows: count*3.1 | Lab B: 3.5 | Mat rows: count*3.1 | Lab C: 3.5 | Box: 11 | Margin: 5
+      const estimatedHeight = 5.2 + 4.5 + (taskInLines.length * 3.1) + 3.5 + (matLines.length * 3.1) + 3.5 + boxHeight + 5.0;
+
+      // Smart Block Page-Break Check: places full day block together on one sheet!
+      checkPageBreak(estimatedHeight);
+
+      // A. Card Header (Orange stripe indicator + Slate-900 bar)
+      doc.setFillColor(245, 158, 11); // Amber
+      doc.rect(15, y, 2.0, 5.2, 'F');
+
+      doc.setFillColor(15, 23, 42); // Slate-900 / dark blue
+      doc.rect(17.0, y, 178.0, 5.2, 'F');
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`HARI KE-${report.no}  |  ${report.tanggalParsed.hari.toUpperCase()}, ${report.tanggalParsed.tanggalStr.toUpperCase()}`, 20, y + 3.6);
+
+      // B. Section Content Areas
+      let currentY = y + 9.2;
+
+      // 1. PART A: Uraian Kegiatan
+      doc.setFont('Helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(7.2);
+      doc.text('A. URAIAN KEGIATAN / PEKERJAAN TERLAKSANA', 15, currentY);
+      currentY += 3.5;
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(51, 65, 85);
+      taskInLines.forEach((line) => {
+        doc.text(line, 18, currentY);
+        currentY += 3.1;
+      });
+
+      // 2. PART B: Logistical materials
+      currentY += 1.5;
+      doc.setFont('Helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(7.2);
+      doc.text('B. PENGGUNAAN MATERIAL / LOGISTIK', 15, currentY);
+      currentY += 3.5;
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(51, 65, 85);
+      matLines.forEach((line) => {
+        doc.text(line, 18, currentY);
+        currentY += 3.1;
+      });
+
+      // 3. PART C: Resources mobilization & field conditions
+      currentY += 1.5;
+      doc.setFont('Helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(7.2);
+      doc.text('C. SUMBER DAYA & KONDISI LAPANGAN', 15, currentY);
+      currentY += 2.5;
+
+      // Card Container background
+      doc.setFillColor(248, 250, 252); // slate-50
+      doc.setDrawColor(226, 232, 240); // slate-200
+      doc.setLineWidth(0.2);
+      doc.roundedRect(15, currentY, 180, boxHeight, 1.0, 1.0, 'FD');
+
+      // Row 1: Mobilisasi Pekerja
+      let boxY1 = currentY + 4.0;
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text("Mobilisasi Pekerja", 18, boxY1);
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(71, 85, 105);
+      const p = report.pekerjaParsed;
+      const mpVal = `:  Mandor: ${p.mandor} \u00a0|\u00a0 Tk. Batu: ${p.tukangBatu} \u00a0|\u00a0 Tk. Plafond: ${p.tukangPlafond} \u00a0|\u00a0 Tk. Keramik: ${p.tukangKeramik} \u00a0|\u00a0 Tk. Besi: ${p.tukangBesi} \u00a0|\u00a0 Pekerja: ${p.pekerja} \u00a0|\u00a0 Total: ${p.total} Org`;
+      doc.text(mpVal, 38.0, boxY1);
+
+      // Row 2: Kondisi Cuaca harian
+      let boxY2 = boxY1 + 4.0;
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text("Kondisi Cuaca", 18, boxY2);
+
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(6.5);
+      doc.setTextColor(71, 85, 105);
+      const weatherVal = `:  Pagi: ${report.cuaca.pagi} \u00a0|\u00a0 Siang: ${report.cuaca.siang} \u00a0|\u00a0 Sore: ${report.cuaca.sore}`;
+      doc.text(weatherVal, 38.0, boxY2);
+
+      // Advance global coordinates with margin spacer for the next iteration cards
+      y = currentY + boxHeight + 5.0;
+    });
+
+    // 5. SIGNATURE SPACES BLOCK
+    const signatureBlockHeight = 44;
+    checkPageBreak(signatureBlockHeight);
+
+    y += 4;
+    doc.setDrawColor(226, 232, 240); // slate-200
+    doc.setLineWidth(0.2);
+    doc.line(15, y, 195, y);
+    y += 5.5;
+
+    // Section title
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.text('OTORISASI & VERIFIKASI DOKUMEN HARIAN', 15, y);
+
+    y += 5.5;
+
+    // Left Signature - PT Mako Engineering Perkasa
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text('KONTRAKTOR PELAKSANA', 22, y);
+    doc.text('PT MAKO ENGINEERING PERKASA', 22, y + 3.5);
+
+    doc.setFont('Helvetica', 'italic');
+    doc.setFontSize(5.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text('[Dokumen Terverifikasi Digital]', 22, y + 16.5);
+    
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text('KURNIAWAN WIBOWO, S.T.', 22, y + 23);
+    doc.setFont('Helvetica', 'normal');
+    doc.text('Project Manager Utama', 22, y + 26);
+
+    // Right Signature - CV Pratama Audit Sipilindo
+    const rightMarginX = 120;
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text('KONSULTAN PENGAWAS', rightMarginX, y);
+    doc.text('CV PRATAMA AUDIT SIPILINDO', rightMarginX, y + 3.5);
+
+    doc.setFont('Helvetica', 'italic');
+    doc.setFontSize(5.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text('[Dokumen Terverifikasi Digital]', rightMarginX, y + 16.5);
+    
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(15, 23, 42);
+    doc.text('IR. ARIEF RAHARDJO, M.T.', rightMarginX, y + 23);
+    doc.setFont('Helvetica', 'normal');
+    doc.text('Chief Supervision Engineer', rightMarginX, y + 26);
+
+    // Render final footer for the last page
+    drawPageFooter(currentPage);
+
+    // Save and Trigger browser download
+    doc.save(`Laporan_Dokumen_Harian_Filtered_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
   return (
