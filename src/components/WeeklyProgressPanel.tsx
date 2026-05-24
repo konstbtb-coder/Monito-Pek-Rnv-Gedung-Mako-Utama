@@ -14,7 +14,8 @@ import {
   Sliders,
   ChevronRight,
   HelpCircle,
-  Sparkles
+  Sparkles,
+  Search
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -36,6 +37,7 @@ export function WeeklyProgressPanel() {
   const [error, setError] = useState<string | null>(null);
   const [selectedWeekIdx, setSelectedWeekIdx] = useState<number>(0);
   const [filterActiveOnly, setFilterActiveOnly] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     async function fetchWeeklyProgress() {
@@ -152,6 +154,16 @@ export function WeeklyProgressPanel() {
     }
     return unique;
   }, [data]);
+
+  // Filter categories based on search input
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return uniqueCategories;
+    const q = searchQuery.toLowerCase().trim();
+    return uniqueCategories.filter(cat => 
+      cat.code.toLowerCase().includes(q) || 
+      cat.name.toLowerCase().includes(q)
+    );
+  }, [uniqueCategories, searchQuery]);
 
   if (loading) {
     return (
@@ -749,20 +761,42 @@ export function WeeklyProgressPanel() {
         </motion.div>
       )}
 
-      {/* SECTORAL WORKS CATEGORIES TABLE BLOCK */}
-      <div className="bg-white border border-sky-100/60 rounded-3xl p-6 shadow-md friendly-card-shadow">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+      {/* SECTORAL WORKS CATEGORIES TABLE BLOCK (STRUKTUR RINCIAN KERJA WBS) */}
+      <div className="bg-white border border-sky-100/60 rounded-3xl p-6 shadow-md friendly-card-shadow" id="wbs-structure-panel">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-4 border-b border-slate-50">
           <div>
-            <h4 className="text-sm font-black text-slate-800 font-sans flex items-center gap-2">
-              <span className="text-emerald-650">👥</span> Jurnal Analisa Struktural Bidang Bobot Kerja (A-K)
+            <h4 className="text-base font-black text-slate-900 font-sans flex items-center gap-2">
+              <span className="text-indigo-600">📋</span> STRUKTUR RINCIAN KERJA (WBS) PROYEK
             </h4>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
-              Rincian bobot per kategori bidang pekerjaan untuk <strong className="text-indigo-900 font-bold">Minggu ke-{(selectedWeekIdx+1)}</strong>
+            <p className="text-xs text-slate-500 font-sans mt-0.5">
+              Rincian bobot per kategori bidang pekerjaan untuk <strong className="text-indigo-950 font-bold">Minggu ke-{(selectedWeekIdx+1)} ({data.headers[selectedWeekIdx]})</strong>
             </p>
           </div>
 
-          <div className="text-[10px] text-slate-400 font-medium font-sans bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-            Kumulatif Total Target: <span className="font-bold text-slate-800 font-mono">100.00%</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Real Search Box */}
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari bagian kerja atau kode..."
+                className="pl-9 pr-4 py-2 border border-slate-200 hover:border-slate-300 focus:border-indigo-500 rounded-xl text-xs font-bold font-sans text-slate-700 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all w-full sm:w-60"
+              />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="text-[10px] text-indigo-750 font-bold font-sans bg-indigo-50/50 border border-indigo-100 px-3 py-2 rounded-xl shrink-0 self-start sm:self-auto uppercase tracking-wide">
+              Bobot Total: <span className="font-mono font-black text-xs">100.00%</span>
+            </div>
           </div>
         </div>
 
@@ -779,25 +813,41 @@ export function WeeklyProgressPanel() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-sans text-slate-700 font-medium">
-              {uniqueCategories.map((cat, idx) => {
-                const weekProgressValue = cat.progress[selectedWeekIdx] || 0;
-                // Contribution to overall cumulative target = Progress% * Weight% / 100
-                const contribution = (weekProgressValue * cat.weight) / 100;
-                
-                return (
-                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-4 text-center font-bold text-slate-900 bg-slate-50/40 font-mono">{cat.code}</td>
-                    <td className="py-3 px-4 font-semibold text-slate-800">{cat.name}</td>
-                    <td className="py-3 px-4 text-right font-bold text-slate-900 font-mono">{cat.weight.toFixed(2)}%</td>
-                    <td className="py-3 px-4 text-right font-bold text-indigo-900 font-mono">
-                      {weekProgressValue > 0 ? `${weekProgressValue.toFixed(2)}%` : <span className="text-slate-400 italic font-mono">-</span>}
-                    </td>
-                    <td className="py-3 px-4 text-right font-bold text-emerald-800 font-mono">
-                      {contribution > 0 ? `${contribution.toFixed(3)}%` : <span className="text-slate-400 font-normal italic font-mono">-</span>}
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredCategories.length > 0 ? (
+                filteredCategories.map((cat, idx) => {
+                  const weekProgressValue = cat.progress[selectedWeekIdx] || 0;
+                  // Contribution to overall cumulative target = Progress% * Weight% / 100
+                  const contribution = (weekProgressValue * cat.weight) / 100;
+                  
+                  return (
+                    <tr key={idx} className="hover:bg-indigo-50/20 transition-colors">
+                      <td className="py-3 px-4 text-center font-black text-slate-900 bg-slate-50/30 font-mono text-xs">{cat.code}</td>
+                      <td className="py-3 px-4 font-bold text-slate-800 text-xs">{cat.name}</td>
+                      <td className="py-3 px-4 text-right font-black text-slate-900 font-mono">{cat.weight.toFixed(3)}%</td>
+                      <td className="py-3 px-4 text-right font-black text-indigo-950 font-mono">
+                        {weekProgressValue > 0 ? (
+                          <span className="bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100/60">
+                            {weekProgressValue.toFixed(2)}%
+                          </span>
+                        ) : <span className="text-slate-400 italic font-mono">-</span>}
+                      </td>
+                      <td className="py-3 px-4 text-right font-black text-emerald-800 font-mono">
+                        {contribution > 0 ? (
+                          <span className="bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100/50">
+                            {contribution.toFixed(3)}%
+                          </span>
+                        ) : <span className="text-slate-400 font-normal italic font-mono">-</span>}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-slate-400 font-sans font-medium italic">
+                    Tidak ditemukan bidang klasifikasi WBS yang sesuai dengan kata kunci pencarian Anda.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

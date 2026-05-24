@@ -18,7 +18,9 @@ import {
   Menu,
   Layers,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { MetricCard } from './components/MetricCard';
@@ -44,7 +46,9 @@ export default function App() {
   const [dismissAlert, setDismissAlert] = useState<boolean>(false);
 
   // Navigation View modes
-  const [viewMode, setViewMode] = useState<'all' | 'daily' | 'weekly'>('all');
+  const [viewMode, setViewMode] = useState<'all' | 'daily' | 'weekly'>('weekly');
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [showTopMenu, setShowTopMenu] = useState<boolean>(true);
   const [showSheetDropdown, setShowSheetDropdown] = useState<boolean>(false);
@@ -1493,130 +1497,218 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-sky-50/50 via-[#f8fafc] to-sky-50/50 bg-friendly-grid text-slate-800 selection:bg-amber-500/20 selection:text-slate-900">
-      {/* Upper Top Navbar Branding */}
-      <header className="border-b border-sky-100/60 bg-white/95 sticky top-0 z-40 backdrop-blur-md shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="btn-3d-active p-2.5 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/15">
-              <Building2 className="w-6 h-6" />
+    <div className="min-h-screen bg-[#F8FAFC] flex font-sans">
+      {/* Mobile Drawer Backdrop */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Responsive Left Sidebar Panel */}
+      <aside className={`fixed inset-y-0 left-0 bg-[#0B0F19] border-r border-slate-800/80 text-white w-64 lg:w-72 flex flex-col z-50 transition-all duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarCollapsed ? 'md:-translate-x-full' : 'md:translate-x-0'}`}>
+        {/* Brand Header */}
+        <div className="p-6 border-b border-slate-800/80 flex items-center justify-between select-none">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 flex-shrink-0">
+              <span className="text-sm font-black animate-pulse">⚡</span>
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] uppercase tracking-wider font-extrabold font-sans text-amber-500 bg-amber-550/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                  Dashboard Real-time
-                </span>
-                <span className="text-[10px] text-slate-500 font-mono">v1.2</span>
-              </div>
-              <h1 className="text-lg font-bold font-display tracking-tight text-slate-900 mt-0.5">
-                Laporan Harian Pekerjaan Gedung Mako Utama
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1.5 text-[11px] text-slate-500 font-sans">
-                <div className="flex items-center gap-1 select-all">
-                  <span className="font-semibold text-slate-400">Pekerjaan:</span>
-                  <span className="text-slate-800 font-bold">Renovasi Mako Gedung Utama</span>
-                </div>
-                <span className="text-slate-300 hidden md:inline">•</span>
-                <div className="flex items-center gap-1 select-all">
-                  <span className="font-semibold text-slate-400">No. Perjanjian:</span>
-                  <span className="text-slate-700 font-mono font-bold">Sperj/ 03 / V /2026</span>
-                </div>
-                <span className="text-slate-300 hidden md:inline">•</span>
-                <div className="flex items-center gap-1">
-                  <span className="font-semibold text-slate-400">Tgl. Perjanjian:</span>
-                  <span className="text-slate-700 font-bold">25 Mei 2026</span>
-                </div>
-                <span className="text-slate-300 hidden md:inline">•</span>
-                <div className="flex items-center gap-1 select-all">
-                  <span className="font-semibold text-slate-400">Nilai Kontrak:</span>
-                  <span className="text-amber-700 font-black">Rp 14.533.880.000,00</span>
-                </div>
-                <span className="text-slate-300 hidden lg:inline">•</span>
-                <div className="flex items-center gap-1 select-all">
-                  <span className="font-semibold text-slate-400">Mitra/Vendor:</span>
-                  <span className="text-slate-800 font-bold">PT. Bina Konstruksi Abadi</span>
-                </div>
-              </div>
+              <h2 className="text-sm font-black tracking-tight text-white font-sans">Portal Genset</h2>
+              <p className="text-[9px] font-bold text-cyan-400 font-mono tracking-widest uppercase mt-0.5">TELEMETRI TERPADU</p>
             </div>
           </div>
+          {/* Button to collapse inside sidebar on desktop */}
+          <button
+            onClick={() => setIsSidebarCollapsed(true)}
+            className="p-1.5 text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800/60 rounded-xl hidden md:flex cursor-pointer transition-colors"
+            title="Sembunyikan Menu"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        </div>
 
-          <div className="flex items-center gap-3 self-stretch sm:self-auto justify-end">
-            <button
-              onClick={() => setShowExportModal(true)}
-              title="Ekspor Seluruh Parameter Dasbor ke Dokumen PDF A4"
-              className="btn-3d-active flex items-center gap-2 px-4 py-2 bg-gradient-to-tr from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-650 text-white rounded-xl text-xs font-black cursor-pointer shadow-md shadow-amber-500/10 transition-all hover:scale-102"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Ekspor PDF Dasbor (A4)</span>
-            </button>
-            <div className="relative">
-              <button
-                onClick={() => setShowSheetDropdown(!showSheetDropdown)}
-                className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-emerald-100 hover:border-emerald-300 hover:bg-emerald-50/20 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all duration-300 shadow-sm"
-              >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-500 animate-pulse" />
-                <span className="hidden sm:inline">Sumber Google Sheets</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" style={{ transform: showSheetDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-              </button>
+        {/* Primary Links */}
+        <nav className="flex-1 p-4 space-y-2 font-sans select-none">
+          <div className="px-3 py-1.5 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+            NAVIGASI UTAMA
+          </div>
+          
+          <button
+            onClick={() => {
+              setViewMode('weekly');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black transition-all text-left cursor-pointer border ${
+              viewMode === 'weekly' 
+                ? 'bg-[#182235] border-indigo-500/20 text-white shadow-md'
+                : 'border-transparent text-slate-450 hover:bg-slate-900/60 hover:text-white'
+            }`}
+          >
+            <FileSpreadsheet className={`w-4.5 h-4.5 shrink-0 ${viewMode === 'weekly' ? 'text-indigo-400' : 'text-slate-400'}`} />
+            <span>Progres Mingguan (WBS)</span>
+          </button>
 
-              {showSheetDropdown && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowSheetDropdown(false)} />
-                  <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-100 rounded-2xl shadow-xl p-2 z-50 animate-fade-in origin-top-right">
-                    <div className="px-3 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
-                      PILIH SUMBER DATA SPREADSHEET
-                    </div>
-                    
-                    <a
-                      href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSVt1_mMr78TcXZ6wRBatp61hSXe5zbBu6iUwkWsi0UaQpTxtls1Vw0tEFNHPlSCHsvQ1_ET4NDfS9j/pubhtml?gid=313978686&single=true"
-                      target="_blank"
-                      rel="noreferrer referrer"
-                      onClick={() => setShowSheetDropdown(false)}
-                      className="flex items-start gap-2.5 p-2.5 mt-1 hover:bg-slate-50 rounded-xl transition-all group"
-                    >
-                      <div className="p-1 px-2.5 bg-amber-50 rounded-lg text-amber-600 font-bold text-[9px] flex items-center justify-center mt-0.5 select-none">
-                        HARIAN
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-bold text-slate-755 flex items-center gap-1 group-hover:text-amber-600 transition-colors">
-                          Laporan Harian Pekerjaan
-                          <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
-                        </div>
-                        <p className="text-[9px] text-slate-500 leading-tight mt-0.5">
-                          Log harian kegiatan, jumlah tenaga kerja, material & cuaca aktual lapangan.
-                        </p>
-                      </div>
-                    </a>
+          <button
+            onClick={() => {
+              setViewMode('daily');
+              setIsSidebarOpen(false);
+            }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black transition-all text-left cursor-pointer border ${
+              viewMode === 'daily'
+                ? 'bg-[#182235] border-indigo-500/20 text-white shadow-md'
+                : 'border-transparent text-slate-450 hover:bg-slate-900/60 hover:text-white'
+            }`}
+          >
+            <Calendar className={`w-4.5 h-4.5 shrink-0 ${viewMode === 'daily' ? 'text-indigo-400' : 'text-slate-400'}`} />
+            <span>Laporan Harian</span>
+          </button>
+        </nav>
 
-                    <a
-                      href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSqQdgFPW0r0KXFGwV-b6b7lFwjqg-r4iSFXHXIoAhoy8lkidYRXNnLSAXpe9Ny16FC6D3rUbEkiLNH/pubhtml?gid=10019249&single=true"
-                      target="_blank"
-                      rel="noreferrer referrer"
-                      onClick={() => setShowSheetDropdown(false)}
-                      className="flex items-start gap-2.5 p-2.5 hover:bg-slate-50 rounded-xl transition-all group"
-                    >
-                      <div className="p-1 px-2 bg-indigo-50 rounded-lg text-indigo-600 font-bold text-[9px] flex items-center justify-center mt-0.5 select-none">
-                        MINGGUAN
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-bold text-slate-755 flex items-center gap-1 group-hover:text-indigo-600 transition-colors">
-                          Laporan Progres Mingguan
-                          <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
-                        </div>
-                        <p className="text-[9px] text-slate-500 leading-tight mt-0.5">
-                          Tabel & kurva realisasi S-Curve, rencana akumulatif, plus pembobotan sub-bidang.
-                        </p>
-                      </div>
-                    </a>
-                  </div>
-                </>
-              )}
-            </div>
+        {/* User Identity Box Footer */}
+        <div className="p-4.5 border-t border-slate-800/80 bg-[#070a11] flex items-center gap-3.5 select-none shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-indigo-650 shrink-0 font-black flex items-center justify-center text-white text-sm shadow-inner shadow-indigo-550/30">
+            K
+          </div>
+          <div className="overflow-hidden min-w-0">
+            <h4 className="text-[11px] font-extrabold text-white truncate font-display">konstbtb@gmail.com</h4>
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono mt-0.5">LEAD OPERATOR</p>
           </div>
         </div>
-      </header>
+      </aside>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Main Right Content Grid */}
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 bg-[#F8FAFC] ${isSidebarCollapsed ? 'md:pl-0' : 'md:pl-64 lg:pl-72'}`}>
+        {/* Dynamic Header Toolbar */}
+        <header className="border-b border-sky-100/60 bg-white/95 sticky top-0 z-40 backdrop-blur-md shadow-2xs py-4 px-4 sm:px-6 flex-shrink-0">
+          <div className="w-full flex flex-row items-center justify-between gap-4">
+            
+            {/* Left Header info block */}
+            <div className="flex items-center gap-3.5 min-w-0">
+              <button 
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 -ml-1 text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100/85 border border-slate-200 rounded-xl md:hidden cursor-pointer flex-shrink-0"
+                title="Buka Menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              {/* Desktop toggle button to collapse navigation panel */}
+              <button 
+                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                className="p-2 -ml-1 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100/85 border border-slate-200 rounded-xl hidden md:flex cursor-pointer flex-shrink-0 shadow-xs transition-all items-center justify-center"
+                title={isSidebarCollapsed ? "Tampilkan Menu Navigasi" : "Sembunyikan Menu Navigasi"}
+              >
+                {isSidebarCollapsed ? (
+                  <div className="flex items-center gap-1.5 px-1 py-0.5">
+                    <ChevronRight className="w-4 h-4 text-indigo-600 font-black animate-bounce" />
+                    <span className="text-[10px] font-black text-indigo-605 tracking-wider uppercase font-sans mr-0.5">Menu</span>
+                  </div>
+                ) : (
+                  <ChevronLeft className="w-4 h-4" />
+                )}
+              </button>
+
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/15 hidden sm:block shrink-0">
+                  <Building2 className="w-5.5 h-5.5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] uppercase tracking-widest font-extrabold font-mono text-indigo-700 bg-indigo-50 px-2 border border-indigo-105 rounded-md flex-shrink-0">
+                      {viewMode === 'weekly' ? 'WEEKLY WBS REPORT' : 'DAILY REPORT JOURNAL'}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono hidden xs:inline">v1.2</span>
+                  </div>
+                  <h1 className="text-sm sm:text-base font-black font-display tracking-tight text-slate-950 truncate mt-0.5">
+                    {viewMode === 'weekly' ? 'WEEKLY WBS CONSTRUCTION REPORT' : 'Laporan Harian Pekerjaan Gedung Mako Utama'}
+                  </h1>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Header actions block */}
+            <div className="flex items-center gap-2.5 shrink-0">
+              <button
+                onClick={() => setShowExportModal(true)}
+                title="Ekspor Seluruh Parameter Dasbor ke Dokumen PDF A4"
+                className="btn-3d-active flex items-center gap-1.5 px-3.5 py-2.5 bg-gradient-to-tr from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-650 text-white rounded-xl text-2xs sm:text-xs font-black cursor-pointer shadow-md shadow-amber-500/10 transition-all hover:scale-102"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Ekspor PDF (A4)</span>
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => setShowSheetDropdown(!showSheetDropdown)}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50/50 rounded-xl text-2xs sm:text-xs font-semibold text-slate-700 hover:text-slate-950 transition-all shadow-xs"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="hidden sm:inline">Google Sheets</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" style={{ transform: showSheetDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                </button>
+
+                {showSheetDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowSheetDropdown(false)} />
+                    <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-100 rounded-2xl shadow-xl p-2 z-50 animate-fade-in origin-top-right">
+                      <div className="px-3 py-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50">
+                        PILIH SUMBER DATA SPREADSHEET
+                      </div>
+                      
+                      <a
+                        href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSVt1_mMr78TcXZ6wRBatp61hSXe5zbBu6iUwkWsi0UaQpTxtls1Vw0tEFNHPlSCHsvQ1_ET4NDfS9j/pubhtml?gid=313978686&single=true"
+                        target="_blank"
+                        rel="noreferrer referrer"
+                        onClick={() => setShowSheetDropdown(false)}
+                        className="flex items-start gap-2.5 p-2.5 mt-1 hover:bg-slate-50 rounded-xl transition-all group lg:col-span-1"
+                      >
+                        <div className="p-1 px-2.5 bg-amber-50 rounded-lg text-amber-600 font-bold text-[9px] flex items-center justify-center mt-0.5 select-none">
+                          HARIAN
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-slate-755 flex items-center gap-1 group-hover:text-amber-600 transition-colors">
+                            Laporan Harian Pekerjaan
+                            <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                          </div>
+                          <p className="text-[9px] text-slate-505 leading-tight mt-0.5">
+                            Log harian kegiatan, jumlah tenaga kerja, material & cuaca aktual lapangan.
+                          </p>
+                        </div>
+                      </a>
+
+                      <a
+                        href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSqQdgFPW0r0KXFGwV-b6b7lFwjqg-r4iSFXHXIoAhoy8lkidYRXNnLSAXpe9Ny16FC6D3rUbEkiLNH/pubhtml?gid=10019249&single=true"
+                        target="_blank"
+                        rel="noreferrer referrer"
+                        onClick={() => setShowSheetDropdown(false)}
+                        className="flex items-start gap-2.5 p-2.5 hover:bg-slate-50 rounded-xl transition-all group"
+                      >
+                        <div className="p-1 px-2 bg-indigo-50 rounded-lg text-indigo-600 font-bold text-[9px] flex items-center justify-center mt-0.5 select-none">
+                          MINGGUAN
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-bold text-slate-755 flex items-center gap-1 group-hover:text-indigo-600 transition-colors">
+                            Laporan Progres Mingguan
+                            <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                          </div>
+                          <p className="text-[9px] text-slate-505 leading-tight mt-0.5">
+                            Tabel & kurva realisasi S-Curve, rencana akumulatif, plus pembobotan sub-bidang.
+                          </p>
+                        </div>
+                      </a>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </header>
+
+        {/* Scrollable grid area for layout modules */}
+        <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 overflow-y-auto">
         
         {/* Real-time Loader or Errors block */}
         {loading ? (
@@ -1642,75 +1734,6 @@ export default function App() {
           </div>
         ) : (
           <div className="space-y-8 animate-fade-in">
-            
-            {/* Main Segmented Menu (Harian & Mingguan) */}
-            <div className="bg-white/80 backdrop-blur-md border border-sky-100/60 rounded-3xl p-4.5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-500/10 rounded-xl text-amber-600">
-                  <Menu className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 font-sans">Menu Pintasan Navigasi</h3>
-                  <p className="text-[10px] text-slate-500 font-sans mt-0.5">Tampilan dasbor otomatis menyesuaikan dengan pilihan Anda.</p>
-                </div>
-              </div>
-
-              {showTopMenu ? (
-                <div className="flex items-center gap-3.5 flex-wrap">
-                  <div className="inline-flex p-0.5 bg-slate-100 rounded-2xl border border-slate-200">
-                    <button
-                      onClick={() => setViewMode('all')}
-                      className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                        viewMode === 'all' 
-                          ? 'bg-slate-900 text-white shadow-md' 
-                          : 'text-slate-500 hover:text-slate-900 font-bold'
-                      }`}
-                    >
-                      <Layers className="w-3.5 h-3.5" />
-                      <span>Semua Tampilan</span>
-                    </button>
-                    <button
-                      onClick={() => setViewMode('daily')}
-                      className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                        viewMode === 'daily' 
-                          ? 'bg-slate-900 text-white shadow-md' 
-                          : 'text-slate-500 hover:text-slate-900 font-bold'
-                      }`}
-                    >
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>Laporan Harian</span>
-                    </button>
-                    <button
-                      onClick={() => setViewMode('weekly')}
-                      className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                        viewMode === 'weekly' 
-                          ? 'bg-slate-900 text-white shadow-md' 
-                          : 'text-slate-500 hover:text-slate-900 font-bold'
-                      }`}
-                    >
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      <span>Kemajuan Mingguan</span>
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={() => setShowTopMenu(false)}
-                    className="p-1.5 px-3 bg-slate-50 hover:bg-slate-200 text-slate-500 hover:text-slate-800 rounded-xl border border-slate-200 transition-colors text-xs font-semibold cursor-pointer select-none"
-                    title="Sembunyikan menu navigasi atas ini"
-                  >
-                    Sembunyikan Menu ✕
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowTopMenu(true)}
-                  className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1.5 border border-amber-600 transition-all shadow-md cursor-pointer select-none"
-                  title="Tampilkan kembali menu navigasi atas"
-                >
-                  <span>Tampilkan Menu Navigasi ➔</span>
-                </button>
-              )}
-            </div>
             
             {/* Real-time Rain Warning Notification Banner */}
             {!dismissAlert && weatherAlerts.length > 0 && (
@@ -1963,7 +1986,7 @@ export default function App() {
       </main>
 
       <footer className="border-t border-sky-100/80 bg-white/60 py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center">
+        <div className="max-w-7xl mx-auto px-4 text-center font-sans">
           <p className="text-xs text-slate-500 font-sans">
             Sistem Pemantauan Konstruksi Digital • Pekerjaan Gedung Mako Utama
           </p>
@@ -1972,6 +1995,7 @@ export default function App() {
           </p>
         </div>
       </footer>
+    </div> {/* Closes the flex-1 main right column container */}
 
       {/* Dynamic Floating Menu (Menu Harian & Mingguan - Otomatis Tersembunyi) */}
       <div 
